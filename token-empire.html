@@ -482,13 +482,17 @@ function achBonus(){
   for(const a of ACHV) if(S.ach.has(a.id)){bc+=a.bc;gc+=a.gc;}
   return {bc,gc};
 }
-function getAP(){ return Math.floor(S.allTimeTot/1e12); }
+function getAP(){
+  const at=isFinite(S.allTimeTot)&&!isNaN(S.allTimeTot)?S.allTimeTot:0;
+  return Math.min(Math.floor(at/1e12),2000);
+}
 function prestigeMult(){ return 1+getAP()*0.02; }
 function cps(){
   const {gc}=achBonus();
   let t=0;
   for(let i=0;i<NB;i++) t+=S.b[i]*BLDGS[i].baseCps*S.bm[i];
-  return t*S.gm*prestigeMult()*(1+gc);
+  const r=t*S.gm*prestigeMult()*(1+gc);
+  return isFinite(r)&&!isNaN(r)?r:0;
 }
 function clickPow(){
   const {bc}=achBonus();
@@ -510,6 +514,11 @@ function effectiveQty(i){ return buyQty==='max'?getMaxBuyable(i):buyQty; }
 
 // FORMAT
 function fmt(n){
+  if(!isFinite(n)||isNaN(n)) return '??';
+  if(n>=1e30) return (n/1e30).toFixed(2)+' No';
+  if(n>=1e27) return (n/1e27).toFixed(2)+' Oc';
+  if(n>=1e24) return (n/1e24).toFixed(2)+' Sp';
+  if(n>=1e21) return (n/1e21).toFixed(2)+' Sx';
   if(n>=1e18) return (n/1e18).toFixed(2)+' Qi';
   if(n>=1e15) return (n/1e15).toFixed(2)+' Q';
   if(n>=1e12) return (n/1e12).toFixed(2)+' T';
@@ -888,23 +897,37 @@ function load(){
   const raw=localStorage.getItem('te4');if(!raw)return;
   try{
     const d=JSON.parse(raw);
-    S.tok=d.tok||0;S.tot=d.tot||0;S.allTimeTot=d.allTimeTot||0;
-    S.b=d.b&&d.b.length===NB?d.b:new Array(NB).fill(0);
+    const safe=(v,fb)=>isFinite(v)&&!isNaN(v)&&v>=0?v:fb;
+    S.tok=safe(d.tok,0);S.tot=safe(d.tot,0);S.allTimeTot=safe(d.allTimeTot,0);
+    S.b=d.b&&d.b.length===NB?d.b.map(v=>safe(v,0)):new Array(NB).fill(0);
     S.pu=new Set(d.pu||[]);S.ach=new Set(d.ach||[]);
-    S.cm=d.cm||1;S.bm=d.bm&&d.bm.length===NB?d.bm:new Array(NB).fill(1);S.gm=d.gm||1;
-    S.clicks=d.clicks||0;S.startTime=d.startTime||Date.now();
+    S.cm=safe(d.cm,1)||1;
+    S.bm=d.bm&&d.bm.length===NB?d.bm.map(v=>safe(v,1)||1):new Array(NB).fill(1);
+    S.gm=safe(d.gm,1)||1;
+    S.clicks=safe(d.clicks,0);S.startTime=safe(d.startTime,Date.now())||Date.now();
     S.msShown=new Set(d.msShown||[]);S.seenUpgrades=new Set(d.seenUpgrades||[]);
-    S.prestigeRuns=d.prestigeRuns||0;
+    S.prestigeRuns=safe(d.prestigeRuns,0);
   }catch(e){console.error(e);}
 }
 function confirmReset(){if(confirm('Wipe ALL progress including all-time tokens and achievements? This cannot be undone.')){localStorage.removeItem('te4');location.reload();}}
 
 // LOOP
+const TOK_CAP=1e50;
+function sanitizeState(){
+  const s=(v,fb)=>isFinite(v)&&!isNaN(v)?v:fb;
+  S.tok=Math.min(s(S.tok,0),TOK_CAP);
+  S.tot=Math.min(s(S.tot,0),TOK_CAP);
+  S.allTimeTot=Math.min(s(S.allTimeTot,0),TOK_CAP);
+  S.gm=s(S.gm,1)<1?1:s(S.gm,1);
+  S.cm=s(S.cm,1)<1?1:s(S.cm,1);
+  for(let i=0;i<NB;i++) S.bm[i]=s(S.bm[i],1)<1?1:s(S.bm[i],1);
+}
 let lastT=Date.now();
 function tick(){
   const now=Date.now(),dt=(now-lastT)/1000;lastT=now;
-  const earned=cps()*dt;
-  if(earned>0){S.tok+=earned;S.tot+=earned;S.allTimeTot+=earned;checkMs();}
+  const c=cps();
+  if(c>0&&isFinite(c)){const e=c*dt;S.tok+=e;S.tot+=e;S.allTimeTot+=e;checkMs();}
+  sanitizeState();
   renderHUD();
 }
 let frame=0;
