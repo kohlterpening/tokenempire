@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOKEN EMPIRE — GPU Clicker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#050711;--panel:#0B1020;--card:#10172A;
+  --border:rgba(125,180,255,0.11);--border2:rgba(125,180,255,0.22);
+  --p:#00D4FF;--p2:rgba(0,212,255,0.18);
+  --s:#00FF88;--s2:rgba(0,255,136,0.14);
+  --acc:#8B5CF6;--acc2:rgba(139,92,246,0.18);
+  --warn:#F59E0B;--warn2:rgba(245,158,11,0.14);
+  --danger:#F43F5E;
+  --bright:#E5F0FF;--text:#7B88A8;--dim:#3A4460;
+  --gold:#FFD700;
+}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono','Courier New',monospace;height:100vh;overflow:hidden;user-select:none;font-size:12px;}
+
+/* LAYOUT */
+#game{display:grid;grid-template-columns:258px 1fr 358px;grid-template-rows:48px 1fr;height:100vh;}
+
+/* HEADER */
+#hdr{grid-column:1/-1;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:14px;}
+#title{font-family:'Orbitron',monospace;color:var(--p);font-size:13px;font-weight:700;letter-spacing:2px;white-space:nowrap;text-shadow:0 0 20px rgba(0,212,255,0.5);}
+#tick-wrap{flex:1;overflow:hidden;height:100%;display:flex;align-items:center;}
+#ticker{white-space:nowrap;animation:tick 80s linear infinite;color:var(--dim);font-size:10px;}
+@keyframes tick{from{transform:translateX(100vw);}to{transform:translateX(-100%);}}
+#save-b{font-size:9px;color:var(--dim);letter-spacing:1px;}
+
+/* LEFT */
+#left{background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:14px 11px;gap:9px;overflow-y:auto;}
+.tok-label{font-size:8px;color:var(--dim);letter-spacing:3px;text-transform:uppercase;}
+#tok-main{font-family:'Orbitron',monospace;font-size:26px;font-weight:900;color:var(--bright);text-align:center;line-height:1.1;text-shadow:0 0 28px rgba(0,212,255,0.3);}
+#tok-earned{font-size:9px;color:var(--s);text-align:center;opacity:0.85;}
+#stage-label{font-size:8px;color:var(--acc);text-align:center;letter-spacing:1px;padding:2px 10px;border:1px solid var(--acc2);border-radius:12px;background:var(--acc2);white-space:nowrap;}
+#rate-row{display:flex;gap:7px;width:100%;}
+.rate-cell{flex:1;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:6px 4px;text-align:center;}
+.rate-cell .rv{font-size:11px;color:var(--bright);font-weight:600;}
+.rate-cell .rl{font-size:7px;color:var(--dim);margin-top:2px;letter-spacing:1px;text-transform:uppercase;}
+
+/* Milestone bar */
+#ms-bar-wrap{width:100%;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:7px 8px;}
+#ms-bar-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+#ms-bar-target{font-size:8px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:78%;}
+#ms-bar-pct{font-size:8px;color:var(--p);}
+#ms-bar-track{height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;}
+#ms-bar-fill{height:100%;background:linear-gradient(90deg,var(--p),var(--s));border-radius:2px;transition:width 0.4s ease;width:0%;}
+
+/* GPU button */
+#click-wrap{position:relative;width:158px;height:158px;flex-shrink:0;}
+#gpu{width:158px;height:158px;border:2px solid rgba(0,212,255,0.35);border-radius:12px;background:radial-gradient(ellipse at 50% 35%,#0d1830 0%,#050711 70%);cursor:pointer;position:relative;overflow:hidden;box-shadow:0 0 24px rgba(0,212,255,0.12),inset 0 1px 0 rgba(0,212,255,0.08);transition:transform .06s,box-shadow .1s,border-color .1s;}
+#gpu:hover{border-color:rgba(0,212,255,0.65);box-shadow:0 0 36px rgba(0,212,255,0.22),inset 0 1px 0 rgba(0,212,255,0.12);}
+#gpu:active{transform:scale(.93);box-shadow:0 0 60px rgba(0,212,255,0.65),inset 0 0 30px rgba(0,212,255,0.12);border-color:var(--p);}
+#gpu::before{content:'';position:absolute;inset:11px;border:1px solid rgba(0,212,255,0.1);border-radius:6px;}
+#gpu::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(0,212,255,0.05),transparent);animation:sweep 3.5s linear infinite;}
+@keyframes sweep{0%{left:-100%;}100%{left:200%;}}
+.cl{position:absolute;background:rgba(0,212,255,0.07);}
+#gg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:54px;height:54px;border-radius:50%;background:radial-gradient(circle,rgba(0,212,255,0.5) 0%,transparent 70%);animation:gp 2s ease-in-out infinite;pointer-events:none;}
+@keyframes gp{0%,100%{opacity:.4;transform:translate(-50%,-50%) scale(1);}50%{opacity:.9;transform:translate(-50%,-50%) scale(1.25);}}
+#gpu-core-label{position:absolute;top:8px;left:0;right:0;text-align:center;font-size:7px;color:var(--dim);letter-spacing:2px;}
+#glabel{position:absolute;bottom:7px;left:0;right:0;text-align:center;font-size:8px;color:rgba(0,212,255,0.55);letter-spacing:3px;font-family:'Orbitron',monospace;}
+.ripple{position:absolute;border-radius:50%;background:rgba(0,212,255,0.22);transform:scale(0);animation:rip .55s ease-out forwards;pointer-events:none;}
+@keyframes rip{to{transform:scale(4);opacity:0;}}
+#golden{display:none;position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,#1a0d00 0%,#050711 70%);border:2px solid var(--gold);border-radius:12px;cursor:pointer;z-index:10;animation:gg2 .55s ease-in-out infinite alternate;flex-direction:column;align-items:center;justify-content:center;gap:3px;}
+#golden.vis{display:flex;}
+@keyframes gg2{from{box-shadow:0 0 15px rgba(255,215,0,.35);}to{box-shadow:0 0 55px rgba(255,215,0,.9),inset 0 0 20px rgba(255,215,0,.05);}}
+#golden-lbl{font-size:8px;color:var(--gold);letter-spacing:2px;font-family:'Orbitron',monospace;}
+
+/* Stats */
+#stats{width:100%;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:8px;font-size:9px;}
+.sr{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.03);}
+.sr:last-child{border-bottom:none;}
+.sk{color:var(--dim);text-transform:uppercase;letter-spacing:1px;}
+.sv{color:var(--text);}
+
+/* Prestige */
+#asc-section{width:100%;}
+#ap-card{background:var(--card);border:1px solid var(--acc2);border-radius:7px;padding:7px 8px;margin-bottom:7px;}
+#ap-row{display:flex;justify-content:space-between;font-size:9px;margin-bottom:5px;}
+#ap-label{color:var(--acc);font-weight:600;}
+#pres-label{color:var(--dim);}
+#ap-bar-track{height:3px;background:rgba(139,92,246,0.12);border-radius:2px;overflow:hidden;}
+#ap-bar-fill{height:100%;background:linear-gradient(90deg,var(--acc),#c084fc);border-radius:2px;transition:width 0.5s;}
+#ascend-btn{width:100%;background:linear-gradient(135deg,var(--acc2),rgba(139,92,246,0.06));border:1px solid rgba(139,92,246,0.28);color:rgba(139,92,246,0.45);padding:8px;cursor:pointer;font-family:'Orbitron',monospace;font-size:9px;letter-spacing:1px;border-radius:6px;transition:all .2s;}
+#ascend-btn.glow{color:var(--acc);border-color:var(--acc);background:linear-gradient(135deg,rgba(139,92,246,0.2),rgba(139,92,246,0.08));animation:ascpulse 1.5s ease-in-out infinite;}
+@keyframes ascpulse{0%,100%{box-shadow:0 0 8px rgba(139,92,246,0.3);}50%{box-shadow:0 0 24px rgba(139,92,246,0.7);}}
+#reset-btn{width:100%;background:none;border:1px solid rgba(244,63,94,0.18);color:rgba(244,63,94,0.3);padding:4px;cursor:pointer;font-family:monospace;font-size:9px;border-radius:4px;letter-spacing:1px;transition:all .2s;}
+#reset-btn:hover{color:var(--danger);border-color:var(--danger);background:rgba(244,63,94,0.05);}
+
+/* MIDDLE */
+#mid{background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+#prod-overview{flex-shrink:0;padding:11px 12px;border-bottom:1px solid var(--border);background:var(--panel);}
+.section-title{font-size:7px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);margin-bottom:8px;font-family:'Orbitron',monospace;}
+#prod-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+.ps-cell{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 6px;text-align:center;position:relative;overflow:hidden;}
+.ps-cell::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--cc,rgba(0,212,255,0.04)) 0%,transparent 55%);pointer-events:none;}
+.ps-val{font-size:12px;font-weight:600;color:var(--bright);line-height:1.2;font-family:'Orbitron',monospace;}
+.ps-label{font-size:7px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-top:3px;}
+#infra-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+#infra-hdr{padding:7px 12px;font-size:7px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--border);background:var(--panel);flex-shrink:0;font-family:'Orbitron',monospace;}
+#infra-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:6px;padding:8px;overflow-y:auto;align-content:start;flex:1;}
+
+/* Infrastructure cards */
+.icard{border-radius:8px;border:1px solid var(--border);background:var(--card);padding:8px;display:flex;flex-direction:column;gap:3px;min-height:78px;transition:border-color .2s,box-shadow .2s;position:relative;overflow:hidden;}
+.icard::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--icolor,rgba(125,180,255,0.15));opacity:0.6;}
+.icard.owned{border-color:var(--icolor,var(--border));}
+.icard.owned::after{opacity:1;}
+.icard.locked{opacity:0.45;filter:saturate(0.25);}
+.icard.locked:hover{opacity:0.6;}
+.ic-top{display:flex;justify-content:space-between;align-items:center;}
+.ic-icon{font-size:17px;line-height:1;}
+.ic-count{font-size:17px;font-weight:700;color:var(--bright);}
+.ic-count.lc{font-size:11px;color:var(--dim);font-weight:400;}
+.ic-name{font-size:9px;color:var(--bright);font-weight:600;line-height:1.3;}
+.ic-cps{font-size:8px;font-weight:500;}
+.ic-each{font-size:7px;color:var(--dim);}
+.ic-next{font-size:8px;color:rgba(245,158,11,0.6);}
+
+/* Event log */
+#event-log{flex-shrink:0;height:102px;border-top:1px solid var(--border);background:var(--panel);display:flex;flex-direction:column;overflow:hidden;}
+#event-log-hdr{padding:5px 10px;font-size:7px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--border);font-family:'Orbitron',monospace;flex-shrink:0;}
+#event-log-items{flex:1;overflow-y:auto;padding:3px 8px;}
+.ev-item{font-size:9px;color:var(--text);padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.025);display:flex;gap:7px;align-items:baseline;}
+.ev-item:last-child{border-bottom:none;}
+.ev-time{color:var(--dim);flex-shrink:0;font-size:7px;width:32px;}
+.ev-msg{flex:1;}
+.ev-ach .ev-msg{color:var(--gold);}
+.ev-ms .ev-msg{color:var(--p);}
+.ev-gold .ev-msg{color:var(--warn);}
+.ev-upg .ev-msg{color:var(--s);}
+
+/* RIGHT */
+#right{background:var(--panel);display:flex;flex-direction:column;overflow:hidden;}
+#rtabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
+.rtab{flex:1;padding:10px 4px;font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;background:none;border:none;color:var(--dim);cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;text-transform:uppercase;}
+.rtab.act{color:var(--p);border-bottom:2px solid var(--p);}
+.rtab:hover:not(.act){color:var(--text);}
+.badge{background:var(--danger);color:#fff;border-radius:50%;width:13px;height:13px;font-size:8px;display:inline-flex;align-items:center;justify-content:center;margin-left:3px;animation:bp 1s ease-in-out infinite;}
+@keyframes bp{0%,100%{box-shadow:0 0 3px var(--danger);}50%{box-shadow:0 0 10px var(--danger);}}
+.badge[hidden]{display:none;}
+.abadge{font-size:8px;color:var(--s);margin-left:3px;}
+#buy-bar{display:flex;align-items:center;gap:4px;padding:6px 10px;border-bottom:1px solid var(--border);flex-shrink:0;background:rgba(0,0,0,0.18);}
+#buy-bar span{font-size:8px;color:var(--dim);margin-right:2px;text-transform:uppercase;letter-spacing:1px;}
+.qbtn{background:none;border:1px solid var(--border);color:var(--dim);padding:3px 9px;border-radius:4px;font-family:monospace;font-size:10px;cursor:pointer;transition:all .15s;}
+.qbtn.act{border-color:var(--p);color:var(--p);background:rgba(0,212,255,0.07);}
+.qbtn:hover:not(.act){border-color:var(--text);color:var(--text);}
+
+/* Shop */
+#shop-panel{overflow-y:auto;flex:1;}
+.brow{display:flex;align-items:center;border-bottom:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:background .12s;min-height:62px;}
+.brow:hover{background:rgba(255,255,255,0.025);}
+.brow.can{background:rgba(0,255,136,0.03);}
+.brow.can:hover{background:rgba(0,255,136,0.07);}
+.brow.broke{opacity:.3;cursor:not-allowed;}
+.bportrait{width:62px;height:62px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:24px;border-right:1px solid rgba(255,255,255,0.05);position:relative;overflow:hidden;}
+.bportrait::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.04) 0%,transparent 55%);}
+.binfo2{flex:1;padding:7px 9px;min-width:0;}
+.bname2{font-size:12px;font-weight:600;color:var(--bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;}
+.bcost2-row{display:flex;align-items:center;gap:5px;margin-top:2px;}
+.bcost2{font-size:11px;color:var(--warn);font-weight:600;}
+.bcost2.ca{color:var(--s);}
+.bqty-label{font-size:8px;color:var(--dim);background:rgba(255,255,255,0.05);padding:1px 4px;border-radius:3px;}
+.bcps2{font-size:8px;color:rgba(0,255,136,0.6);margin-top:2px;}
+.bcount-badge{width:46px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;border-left:1px solid rgba(255,255,255,0.05);height:62px;}
+
+/* Upgrades */
+#upg-panel{display:none;overflow-y:auto;flex:1;}
+#upg-panel.vis{display:block;}
+.upg-section-hdr{padding:8px 10px 4px;font-size:7px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);font-family:'Orbitron',monospace;}
+.upg-list{padding:4px 8px;display:flex;flex-direction:column;gap:4px;}
+.upg-card{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;transition:all .15s;}
+.upg-card:hover{border-color:var(--p);background:rgba(0,212,255,0.03);}
+.upg-card.rdy{border-color:rgba(0,255,136,0.38);background:rgba(0,255,136,0.03);animation:upgp 1.4s ease-in-out infinite;}
+@keyframes upgp{0%,100%{box-shadow:0 0 6px rgba(0,255,136,0.18);}50%{box-shadow:0 0 14px rgba(0,255,136,0.48);}}
+.upg-card.done{opacity:.27;cursor:default;filter:grayscale(.7);}
+.upg-card.done:hover{border-color:var(--border);background:var(--card);box-shadow:none;}
+.upg-icon{font-size:17px;flex-shrink:0;width:22px;text-align:center;}
+.upg-body{flex:1;min-width:0;}
+.upg-name{font-size:10px;color:var(--bright);font-weight:600;line-height:1.2;}
+.upg-eff{font-size:8px;color:var(--s);margin-top:1px;}
+.upg-cost{font-size:9px;margin-top:2px;}
+.upg-cost.ca{color:var(--s);}
+.upg-cost.notca{color:var(--warn);}
+
+/* Achievements */
+#ach-panel{display:none;overflow-y:auto;flex:1;}
+#ach-panel.vis{display:block;}
+#ach-header{padding:9px 10px 4px;display:flex;justify-content:space-between;align-items:center;}
+#ach-progress-text{font-size:9px;color:var(--s);}
+#ach-grid{padding:4px 8px;display:grid;grid-template-columns:1fr 1fr;gap:5px;align-content:start;}
+.acard{border-radius:8px;border:1px solid var(--border);background:var(--card);padding:8px;display:flex;gap:6px;align-items:flex-start;transition:all .2s;}
+.acard.earned{border-color:rgba(255,215,0,0.32);background:rgba(255,215,0,0.04);box-shadow:0 0 8px rgba(255,215,0,0.07);}
+.acard.locked{opacity:.32;filter:grayscale(.7);}
+.acard-icon{font-size:17px;flex-shrink:0;}
+.acard-info{min-width:0;}
+.acard-name{font-size:9px;font-weight:700;color:var(--bright);line-height:1.2;}
+.acard-bonus{font-size:8px;color:var(--gold);margin-top:1px;}
+.acard-cond{font-size:7px;color:var(--dim);margin-top:2px;line-height:1.3;}
+
+/* Tooltip */
+#tip{position:fixed;background:#0a0f1e;border:1px solid var(--border2);border-radius:8px;padding:10px 12px;width:198px;font-size:11px;pointer-events:none;z-index:999;line-height:1.6;display:none;box-shadow:0 8px 32px rgba(0,0,0,0.55);}
+#tip.vis{display:block;}
+.t-name{color:var(--bright);font-weight:700;margin-bottom:4px;font-size:12px;}
+.t-eff{color:var(--s);font-size:10px;}
+.t-cost{color:var(--warn);font-size:10px;margin-top:2px;}
+.t-desc{color:var(--text);margin-top:4px;font-size:10px;}
+.t-flavor{color:var(--dim);margin-top:3px;font-size:9px;font-style:italic;}
+
+/* Toast */
+#notif{position:fixed;top:58px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border2);border-radius:8px;padding:8px 18px;font-size:11px;color:var(--bright);z-index:2000;opacity:0;transition:opacity .22s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.4);}
+#notif.vis{opacity:1;}
+
+/* Float text */
+.ft{position:fixed;pointer-events:none;font-size:14px;font-weight:700;color:var(--p);animation:ftu .9s ease-out forwards;z-index:3000;text-shadow:0 0 12px rgba(0,212,255,0.65);}
+@keyframes ftu{0%{opacity:1;transform:translateY(0) scale(1);}80%{opacity:.8;transform:translateY(-44px) scale(1.05);}100%{opacity:0;transform:translateY(-64px) scale(.9);}}
+
+/* Effect bar */
+#effect-bar{display:none;position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(245,158,11,0.13);border:1px solid rgba(245,158,11,0.38);border-radius:20px;padding:4px 16px;font-size:10px;color:var(--gold);z-index:1500;animation:efbp .6s ease-in-out infinite alternate;}
+#effect-bar.vis{display:block;}
+@keyframes efbp{from{box-shadow:0 0 8px rgba(255,215,0,.25);}to{box-shadow:0 0 20px rgba(255,215,0,.55);}}
+
+::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--dim);border-radius:2px;}
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="hdr">
+    <div id="title">⚡ TOKEN EMPIRE</div>
+    <div id="tick-wrap"><span id="ticker"></span></div>
+    <div id="save-b">● AUTO-SAVE</div>
+  </div>
+
+  <div id="left">
+    <div class="tok-label">tokens</div>
+    <div id="tok-main">0</div>
+    <div id="tok-earned">0 this run</div>
+    <div id="stage-label">BOOT SEQUENCE</div>
+    <div id="rate-row">
+      <div class="rate-cell"><div class="rv" id="tok-cps">0</div><div class="rl">/sec</div></div>
+      <div class="rate-cell"><div class="rv" id="tok-cpc">0</div><div class="rl">/click</div></div>
+    </div>
+    <div id="ms-bar-wrap">
+      <div id="ms-bar-top"><span id="ms-bar-target">—</span><span id="ms-bar-pct">0%</span></div>
+      <div id="ms-bar-track"><div id="ms-bar-fill"></div></div>
+    </div>
+    <div id="click-wrap">
+      <div id="gpu">
+        <div id="chip-lines"></div>
+        <div id="gg"></div>
+        <div id="gpu-core-label">CLICK TO MINE</div>
+        <div id="glabel">GPU-∞</div>
+      </div>
+      <div id="golden">
+        <span style="font-size:28px">✨</span>
+        <div id="golden-lbl">GOLDEN GPU</div>
+      </div>
+    </div>
+    <div id="stats">
+      <div class="sr"><span class="sk">clicks</span><span class="sv" id="s-click">0</span></div>
+      <div class="sr"><span class="sk">time</span><span class="sv" id="s-time">0m 0s</span></div>
+      <div class="sr"><span class="sk">upgrades</span><span class="sv" id="s-upg">0</span></div>
+      <div class="sr"><span class="sk">buildings</span><span class="sv" id="s-bld">0</span></div>
+      <div class="sr"><span class="sk">ascensions</span><span class="sv" id="s-runs">0</span></div>
+    </div>
+    <div id="asc-section">
+      <div id="ap-card">
+        <div id="ap-row"><span id="ap-label">0 AP · ×1.00</span><span id="pres-label">0 all-time</span></div>
+        <div id="ap-bar-track"><div id="ap-bar-fill" style="width:0%"></div></div>
+      </div>
+      <button id="ascend-btn" onclick="tryAscend()">⬆ ASCEND</button>
+    </div>
+    <button id="reset-btn" onclick="confirmReset()">HARD RESET</button>
+  </div>
+
+  <div id="mid">
+    <div id="prod-overview">
+      <div class="section-title">production overview</div>
+      <div id="prod-stats">
+        <div class="ps-cell" style="--cc:rgba(0,212,255,0.06)"><div class="ps-val" id="pov-cps">0</div><div class="ps-label">tokens/sec</div></div>
+        <div class="ps-cell" style="--cc:rgba(0,255,136,0.05)"><div class="ps-val" id="pov-blds">0</div><div class="ps-label">buildings</div></div>
+        <div class="ps-cell" style="--cc:rgba(139,92,246,0.06)"><div class="ps-val" id="pov-mult">×1.00</div><div class="ps-label">multiplier</div></div>
+      </div>
+    </div>
+    <div id="infra-wrap">
+      <div id="infra-hdr">infrastructure grid</div>
+      <div id="infra-grid"></div>
+    </div>
+    <div id="event-log">
+      <div id="event-log-hdr">system log</div>
+      <div id="event-log-items"></div>
+    </div>
+  </div>
+
+  <div id="right">
+    <div id="rtabs">
+      <button class="rtab act" id="tab-shop" onclick="switchTab('shop')">SHOP</button>
+      <button class="rtab" id="tab-upg" onclick="switchTab('upg')">UPGRADES <span id="upg-badge" class="badge" hidden>!</span></button>
+      <button class="rtab" id="tab-ach" onclick="switchTab('ach')">ACHV <span id="ach-count" class="abadge">0/16</span></button>
+    </div>
+    <div id="buy-bar">
+      <span>Buy:</span>
+      <button class="qbtn act" onclick="setQty(this,1)">×1</button>
+      <button class="qbtn" onclick="setQty(this,10)">×10</button>
+      <button class="qbtn" onclick="setQty(this,100)">×100</button>
+      <button class="qbtn" onclick="setQty(this,'max')">MAX</button>
+    </div>
+    <div id="shop-panel"></div>
+    <div id="upg-panel">
+      <div class="upg-section-hdr">available</div>
+      <div class="upg-list" id="upg-grid"></div>
+      <div class="upg-section-hdr" id="upg-done-hdr" style="display:none">purchased</div>
+      <div class="upg-list" id="upg-done-grid"></div>
+    </div>
+    <div id="ach-panel">
+      <div id="ach-header">
+        <div class="section-title" style="margin:0">achievements</div>
+        <div id="ach-progress-text">0 / 16</div>
+      </div>
+      <div id="ach-grid"></div>
+    </div>
+  </div>
+</div>
+<div id="notif"></div>
+<div id="tip"></div>
+<div id="effect-bar"></div>
+
+<script>
+const SCALE = 1.15;
+const NB = 18;
+
+const BCOLORS = [
+  '#00d4ff','#ffd700','#4488ff','#00ff88','#ff8c00','#8855ff',
+  '#ff55aa','#ff4455','#00ffcc','#e0e0ff','#cc88ff','#ffaa00',
+  '#3377ff','#ff7700','#88ffee','#ff88dd','#aaffaa','#ffffff'
+];
+
+const BLDGS = [
+  {id:0, name:'GPU Core',            icon:'🔲',baseCost:15,              baseCps:0.1,           desc:'A single GPU quietly mining tokens.',              flavor:'"Just one more GPU," you whisper.'},
+  {id:1, name:'Mining Rig',          icon:'⚡',baseCost:100,             baseCps:0.5,           desc:'Four GPUs zip-tied into a wood frame.',            flavor:'The fans sound like a helicopter.'},
+  {id:2, name:'Render Node',         icon:'🖥️',baseCost:1100,            baseCps:4,             desc:'A dedicated workstation built for compute.',       flavor:'It used to render movies. Now it renders tokens.'},
+  {id:3, name:'Edge Server',         icon:'📡',baseCost:12000,           baseCps:47,            desc:'Distributed edge compute brings tokens closer.',   flavor:'Latency: irrelevant. Tokens: everything.'},
+  {id:4, name:'Colo Rack',           icon:'🗄️',baseCost:130000,          baseCps:260,           desc:'A full rack in a real data center.',               flavor:'Somewhere in Phoenix, your rack hums silently.'},
+  {id:5, name:'GPU Cluster',         icon:'🌐',baseCost:1400000,         baseCps:1400,          desc:'Hundreds of GPUs unified by InfiniBand.',          flavor:'The cooling bill is someone else\'s problem.'},
+  {id:6, name:'AI Training Pod',     icon:'🤖',baseCost:20000000,        baseCps:7800,          desc:'H100-class dedicated training infrastructure.',    flavor:'It claims to dream of electric tokens.'},
+  {id:7, name:'Hyperscale DC',       icon:'🏭',baseCost:330000000,       baseCps:44000,         desc:'A warehouse-scale data center complex.',           flavor:'You need a separate power plant. Worth it.'},
+  {id:8, name:'Orbital Array',       icon:'🛸',baseCost:5100000000,      baseCps:260000,        desc:'Space-based GPU constellation in low orbit.',      flavor:'Tokens rain down from the heavens.'},
+  {id:9, name:'Quantum Core',        icon:'⚛️',baseCost:75000000000,     baseCps:1600000,       desc:'Quantum-enhanced tensor processing at scale.',     flavor:'Generates tokens in superposition.'},
+  {id:10,name:'Neural Fabric',       icon:'🧬',baseCost:1000000000000,   baseCps:10000000,      desc:'Synthetic neural tissue wired for compute.',       flavor:'It wants to learn. You let it.'},
+  {id:11,name:'Dyson Sphere',        icon:'☀️',baseCost:14000000000000,  baseCps:65000000,      desc:'Captures an entire star\'s energy output.',        flavor:'The star doesn\'t mind. Probably.'},
+  {id:12,name:'Galactic Network',    icon:'🌌',baseCost:170000000000000, baseCps:430000000,     desc:'GPU clusters distributed across star systems.',    flavor:'The speed of light is now a concern.'},
+  {id:13,name:'Temporal Processor',  icon:'⏳',baseCost:2.1e15,          baseCps:2900000000,    desc:'Computes tokens from past and future simultaneously.',flavor:'Yesterday\'s tokens are already spent.'},
+  {id:14,name:'Reality Engine',      icon:'💫',baseCost:2.6e16,          baseCps:21000000000,   desc:'Mines tokens from the fabric of spacetime itself.', flavor:'Reality.exe is running low on memory.'},
+  {id:15,name:'Consciousness Upload',icon:'🧠',baseCost:3.1e17,          baseCps:150000000000,  desc:'Upload minds to generate tokens indefinitely.',    flavor:'They volunteered. Mostly.'},
+  {id:16,name:'Entropy Reverser',    icon:'♻️',baseCost:7.1e19,          baseCps:1100000000000, desc:'Reverse entropy to extract tokens from chaos.',    flavor:'Thermodynamics files a complaint.'},
+  {id:17,name:'Omega Singularity',   icon:'⭐',baseCost:1.2e22,          baseCps:8300000000000, desc:'A self-improving token singularity beyond comprehension.',flavor:'It generates tokens. That\'s all it does now.'},
+];
+
+const UPGRADES = [
+  {id:'c1',name:'Clicky Keys',        icon:'⌨️',cost:100,      eff:'click ×2',  desc:'Mechanical keyboard doubles click output.',    unlock:s=>s.tot>=25,        apply:s=>{s.cm*=2;}},
+  {id:'c2',name:'Hotkey Macros',      icon:'🖱️',cost:500,      eff:'click ×2',  desc:'Scripted macros double efficiency.',           unlock:s=>s.tot>=200,       apply:s=>{s.cm*=2;}},
+  {id:'c3',name:'Ergonomic Chair',    icon:'🪑',cost:5000,     eff:'click ×2',  desc:'Click longer without fatigue.',                unlock:s=>s.tot>=2000,      apply:s=>{s.cm*=2;}},
+  {id:'c4',name:'Neural Interface',   icon:'🧠',cost:50000,    eff:'click ×3',  desc:'Think tokens directly into existence.',        unlock:s=>s.tot>=20000,     apply:s=>{s.cm*=3;}},
+  {id:'c5',name:'Quantum Click',      icon:'🌌',cost:2000000,  eff:'click ×5',  desc:'Observe tokens to collapse wavefunctions.',    unlock:s=>s.tot>=1000000,   apply:s=>{s.cm*=5;}},
+  {id:'b0a',name:'VRAM Boost',        icon:'📈',cost:75,       eff:'GPU Core ×2',desc:'More VRAM, faster processing.',               unlock:s=>s.b[0]>=1,  apply:s=>{s.bm[0]*=2;}},
+  {id:'b0b',name:'Shader Opt',        icon:'⚙️',cost:375,      eff:'GPU Core ×2',desc:'Optimized shaders speed up generation.',      unlock:s=>s.b[0]>=5,  apply:s=>{s.bm[0]*=2;}},
+  {id:'b0c',name:'Overclocking',      icon:'🔥',cost:3750,     eff:'GPU Core ×2',desc:'Push beyond rated limits.',                   unlock:s=>s.b[0]>=25, apply:s=>{s.bm[0]*=2;}},
+  {id:'b0d',name:'Liquid Cooling',    icon:'🧊',cost:37500,    eff:'GPU Core ×2',desc:'Stay cool, stay fast.',                       unlock:s=>s.b[0]>=50, apply:s=>{s.bm[0]*=2;}},
+  {id:'b0e',name:'DLSS Overdrive',    icon:'💎',cost:375000,   eff:'GPU Core ×2',desc:'AI-enhanced token upscaling.',                unlock:s=>s.b[0]>=100,apply:s=>{s.bm[0]*=2;}},
+  {id:'b1a',name:'Bigger PSU',        icon:'🔌',cost:500,      eff:'Rig ×2',    desc:'More power to the rig.',                      unlock:s=>s.b[1]>=1,  apply:s=>{s.bm[1]*=2;}},
+  {id:'b1b',name:'HiveOS Pro',        icon:'🐝',cost:2500,     eff:'Rig ×2',    desc:'Pro mining OS squeezes more tokens.',          unlock:s=>s.b[1]>=5,  apply:s=>{s.bm[1]*=2;}},
+  {id:'b1c',name:'Rig Stacking',      icon:'📚',cost:25000,    eff:'Rig ×2',    desc:'Vertical stacking for higher density.',        unlock:s=>s.b[1]>=25, apply:s=>{s.bm[1]*=2;}},
+  {id:'b1d',name:'Industrial UPS',    icon:'🔋',cost:250000,   eff:'Rig ×2',    desc:'24/7 uninterruptible uptime.',                 unlock:s=>s.b[1]>=50, apply:s=>{s.bm[1]*=2;}},
+  {id:'b2a',name:'ECC Memory',        icon:'🛡️',cost:5500,     eff:'Render ×2', desc:'Error-correcting RAM prevents waste.',         unlock:s=>s.b[2]>=1,  apply:s=>{s.bm[2]*=2;}},
+  {id:'b2b',name:'NVMe Cache',        icon:'💾',cost:27500,    eff:'Render ×2', desc:'Ultra-fast storage accelerates processing.',   unlock:s=>s.b[2]>=5,  apply:s=>{s.bm[2]*=2;}},
+  {id:'b2c',name:'PCIe 5.0',          icon:'🚀',cost:275000,   eff:'Render ×2', desc:'Next-gen interconnect doubles bandwidth.',     unlock:s=>s.b[2]>=25, apply:s=>{s.bm[2]*=2;}},
+  {id:'b3a',name:'CDN Integration',   icon:'🌍',cost:60000,    eff:'Edge ×2',   desc:'Route tokens through global edge nodes.',      unlock:s=>s.b[3]>=1,  apply:s=>{s.bm[3]*=2;}},
+  {id:'b3b',name:'5G Uplink',         icon:'📶',cost:300000,   eff:'Edge ×2',   desc:'High-bandwidth cellular backhaul.',            unlock:s=>s.b[3]>=5,  apply:s=>{s.bm[3]*=2;}},
+  {id:'b3c',name:'Fog Computing',     icon:'🌫️',cost:3000000,  eff:'Edge ×2',   desc:'Distribute compute across the fog layer.',     unlock:s=>s.b[3]>=25, apply:s=>{s.bm[3]*=2;}},
+  {id:'b4a',name:'Hot/Cold Aisle',    icon:'❄️',cost:650000,   eff:'Colo ×2',   desc:'Proper airflow optimization.',                 unlock:s=>s.b[4]>=1,  apply:s=>{s.bm[4]*=2;}},
+  {id:'b4b',name:'100GbE Switch',     icon:'🔗',cost:3250000,  eff:'Colo ×2',   desc:'High-speed networking between racks.',         unlock:s=>s.b[4]>=5,  apply:s=>{s.bm[4]*=2;}},
+  {id:'b4c',name:'Power Density+',    icon:'⚡',cost:32500000, eff:'Colo ×2',   desc:'More kW per rack = more tokens.',              unlock:s=>s.b[4]>=25, apply:s=>{s.bm[4]*=2;}},
+  {id:'b5a',name:'InfiniBand HDR',    icon:'🔀',cost:7000000,  eff:'Cluster ×2',desc:'Ultra-low latency interconnect.',               unlock:s=>s.b[5]>=1,  apply:s=>{s.bm[5]*=2;}},
+  {id:'b5b',name:'RDMA Protocol',     icon:'📊',cost:35000000, eff:'Cluster ×2',desc:'Remote Direct Memory Access for speed.',       unlock:s=>s.b[5]>=5,  apply:s=>{s.bm[5]*=2;}},
+  {id:'b5c',name:'NVLink Bridge',     icon:'🌉',cost:350000000,eff:'Cluster ×2',desc:'Direct GPU-to-GPU high bandwidth fabric.',     unlock:s=>s.b[5]>=25, apply:s=>{s.bm[5]*=2;}},
+  {id:'b6a',name:'Mixed Precision',   icon:'🎯',cost:1e8,      eff:'AI Pod ×2', desc:'FP16 training doubles throughput.',             unlock:s=>s.b[6]>=1,  apply:s=>{s.bm[6]*=2;}},
+  {id:'b6b',name:'Gradient Ckpt',     icon:'✅',cost:5e8,      eff:'AI Pod ×2', desc:'Memory optimization for deeper networks.',     unlock:s=>s.b[6]>=5,  apply:s=>{s.bm[6]*=2;}},
+  {id:'b6c',name:'Flash Attention',   icon:'⚡',cost:5e9,      eff:'AI Pod ×2', desc:'Quadratic attention complexity crushed.',      unlock:s=>s.b[6]>=25, apply:s=>{s.bm[6]*=2;}},
+  {id:'b7a',name:'Immersion Cool',    icon:'🌊',cost:1.65e9,   eff:'DC ×2',     desc:'Liquid immersion for maximum density.',        unlock:s=>s.b[7]>=1,  apply:s=>{s.bm[7]*=2;}},
+  {id:'b7b',name:'Nuclear Reactor',   icon:'☢️',cost:8.25e9,   eff:'DC ×2',     desc:'Unlimited clean power for unlimited tokens.',  unlock:s=>s.b[7]>=5,  apply:s=>{s.bm[7]*=2;}},
+  {id:'b7c',name:'Antimatter Tap',    icon:'🔬',cost:8.25e10,  eff:'DC ×2',     desc:'Annihilate matter for pure token energy.',     unlock:s=>s.b[7]>=25, apply:s=>{s.bm[7]*=2;}},
+  {id:'b8a',name:'Solar Sails',       icon:'☀️',cost:2.55e10,  eff:'Orbital ×2',desc:'Free energy from the sun.',                    unlock:s=>s.b[8]>=1,  apply:s=>{s.bm[8]*=2;}},
+  {id:'b8b',name:'Lunar Relay',       icon:'🌕',cost:1.275e11, eff:'Orbital ×2',desc:'Bounce tokens off the moon for range.',        unlock:s=>s.b[8]>=5,  apply:s=>{s.bm[8]*=2;}},
+  {id:'b9a',name:'Qubit Stabilizer',  icon:'🔮',cost:3.75e11,  eff:'Quantum ×2',desc:'Reduce decoherence, boost token yield.',       unlock:s=>s.b[9]>=1,  apply:s=>{s.bm[9]*=2;}},
+  {id:'b9b',name:'Topological Qubits',icon:'🌀',cost:1.875e12, eff:'Quantum ×2',desc:'Error-free quantum computation.',              unlock:s=>s.b[9]>=5,  apply:s=>{s.bm[9]*=2;}},
+  {id:'b10a',name:'Synapse Boost',    icon:'🧪',cost:5e12,     eff:'Neural ×2', desc:'Stronger synaptic connections.',               unlock:s=>s.b[10]>=1, apply:s=>{s.bm[10]*=2;}},
+  {id:'b10b',name:'Cortex Array',     icon:'🧠',cost:2.5e13,   eff:'Neural ×2', desc:'Deep cortical token density.',                 unlock:s=>s.b[10]>=5, apply:s=>{s.bm[10]*=2;}},
+  {id:'b11a',name:'Coronal Tap',      icon:'🌞',cost:7e13,     eff:'Dyson ×2',  desc:'Harvest energy from solar flares.',            unlock:s=>s.b[11]>=1, apply:s=>{s.bm[11]*=2;}},
+  {id:'b11b',name:'Stellar Forge',    icon:'⭐',cost:3.5e14,   eff:'Dyson ×2',  desc:'Forge tokens in stellar nuclear fire.',        unlock:s=>s.b[11]>=5, apply:s=>{s.bm[11]*=2;}},
+  {id:'b12a',name:'Dark Matter Bus',  icon:'🌑',cost:8.5e14,   eff:'Galactic ×2',desc:'Use dark matter as token transport medium.',   unlock:s=>s.b[12]>=1, apply:s=>{s.bm[12]*=2;}},
+  {id:'b12b',name:'Warp Fiber',       icon:'🌀',cost:4.25e15,  eff:'Galactic ×2',desc:'FTL token delivery via warp fiber.',          unlock:s=>s.b[12]>=5, apply:s=>{s.bm[12]*=2;}},
+  {id:'b13a',name:'Causal Buffer',    icon:'⌛',cost:1.05e16,  eff:'Temporal ×2',desc:'Buffer tokens across causal boundaries.',      unlock:s=>s.b[13]>=1, apply:s=>{s.bm[13]*=2;}},
+  {id:'b13b',name:'Paradox Engine',   icon:'🔄',cost:5.25e16,  eff:'Temporal ×2',desc:'Exploit time paradoxes for token gain.',      unlock:s=>s.b[13]>=5, apply:s=>{s.bm[13]*=2;}},
+  {id:'b14a',name:'Spacetime Fold',   icon:'💫',cost:1.3e17,   eff:'Reality ×2', desc:'Fold spacetime to stack token dimensions.',   unlock:s=>s.b[14]>=1, apply:s=>{s.bm[14]*=2;}},
+  {id:'b14b',name:'Entropy Harvest',  icon:'♾️',cost:6.5e17,   eff:'Reality ×2', desc:'Mine entropy from a dying universe.',         unlock:s=>s.b[14]>=5, apply:s=>{s.bm[14]*=2;}},
+  {id:'b15a',name:'Synaptic Mesh',    icon:'🕸️',cost:1.55e18,  eff:'Consciousness ×2',desc:'Interconnected minds amplify output.',   unlock:s=>s.b[15]>=1, apply:s=>{s.bm[15]*=2;}},
+  {id:'b15b',name:'Hivemind Protocol',icon:'🐝',cost:7.75e18,  eff:'Consciousness ×2',desc:'All minds work as one.',                 unlock:s=>s.b[15]>=5, apply:s=>{s.bm[15]*=2;}},
+  {id:'b16a',name:"Maxwell's Demon",  icon:'👿',cost:3.55e20,  eff:'Entropy ×2', desc:'Sorts hot and cold particles for free.',      unlock:s=>s.b[16]>=1, apply:s=>{s.bm[16]*=2;}},
+  {id:'b16b',name:'Time Crystal',     icon:'⏳',cost:1.775e21, eff:'Entropy ×2', desc:'Stable temporal crystal amplification.',      unlock:s=>s.b[16]>=5, apply:s=>{s.bm[16]*=2;}},
+  {id:'b17a',name:'Recursive Loop',   icon:'🔄',cost:6e22,     eff:'Omega ×2',   desc:'Self-improvement feedback loop.',             unlock:s=>s.b[17]>=1, apply:s=>{s.bm[17]*=2;}},
+  {id:'b17b',name:'Basilisk Protocol',icon:'👁️',cost:3e23,     eff:'Omega ×2',   desc:"...you don't want to know.",                  unlock:s=>s.b[17]>=5, apply:s=>{s.bm[17]*=2;}},
+  {id:'g1',name:'CUDA 20.0',          icon:'🔧',cost:2000,     eff:'all ×2',    desc:'Next-gen GPU programming framework.',          unlock:s=>s.tot>=2000,      apply:s=>{s.gm*=2;}},
+  {id:'g2',name:'Distributed Compute',icon:'🕸️',cost:20000,    eff:'all ×2',    desc:'Harness the full network.',                    unlock:s=>s.tot>=20000,     apply:s=>{s.gm*=2;}},
+  {id:'g3',name:'AI-Opt Silicon',     icon:'💡',cost:200000,   eff:'all ×2',    desc:'Custom chips designed for token generation.',  unlock:s=>s.tot>=200000,    apply:s=>{s.gm*=2;}},
+  {id:'g4',name:"Moore's Override",   icon:'📐',cost:2000000,  eff:'all ×2',    desc:'Ignore physical limitations.',                 unlock:s=>s.tot>=2000000,   apply:s=>{s.gm*=2;}},
+  {id:'g5',name:'AGI Optimizer',      icon:'🌠',cost:2e9,      eff:'all ×3',    desc:'AGI optimizes your entire infrastructure.',    unlock:s=>s.tot>=2e9,       apply:s=>{s.gm*=3;}},
+  {id:'g6',name:'Multiverse Tap',     icon:'🪐',cost:2e12,     eff:'all ×5',    desc:'Token production from parallel universes.',    unlock:s=>s.tot>=2e12,      apply:s=>{s.gm*=5;}},
+  {id:'g7',name:'Post-Scarcity',      icon:'♾️',cost:2e15,     eff:'all ×10',   desc:'Tokens are everywhere. You are everything.',   unlock:s=>s.tot>=2e15,      apply:s=>{s.gm*=10;}},
+];
+
+const ACHV = [
+  {id:'c0',name:'First Spark',      icon:'✨',bonus:'+5% click', bc:0.05,gc:0,   cond:s=>s.clicks>=1,           cdesc:'Click once.'},
+  {id:'c1',name:'Click Addict',     icon:'🖱️',bonus:'+10% click',bc:0.10,gc:0,   cond:s=>s.clicks>=500,         cdesc:'Click 500 times.'},
+  {id:'c2',name:'RSI Warning',      icon:'💪',bonus:'+20% click',bc:0.20,gc:0,   cond:s=>s.clicks>=10000,       cdesc:'Click 10,000 times.'},
+  {id:'t0',name:'Thousand Tokens',  icon:'🪙',bonus:'+1% prod',  bc:0,   gc:0.01,cond:s=>s.allTimeTot>=1000,    cdesc:'Earn 1,000 total tokens.'},
+  {id:'t1',name:'Millionaire',      icon:'💰',bonus:'+2% prod',  bc:0,   gc:0.02,cond:s=>s.allTimeTot>=1e6,     cdesc:'Earn 1 million total.'},
+  {id:'t2',name:'Billionaire',      icon:'💎',bonus:'+5% prod',  bc:0,   gc:0.05,cond:s=>s.allTimeTot>=1e9,     cdesc:'Earn 1 billion total.'},
+  {id:'t3',name:'Trillionaire',     icon:'🌟',bonus:'+10% prod', bc:0,   gc:0.10,cond:s=>s.allTimeTot>=1e12,    cdesc:'Earn 1 trillion total.'},
+  {id:'t4',name:'Quadrillionaire',  icon:'🌌',bonus:'+25% prod', bc:0,   gc:0.25,cond:s=>s.allTimeTot>=1e15,    cdesc:'Earn 1 quadrillion total.'},
+  {id:'t5',name:'Post-Human',       icon:'🤖',bonus:'+50% prod', bc:0,   gc:0.50,cond:s=>s.allTimeTot>=1e18,    cdesc:'Earn 1 quintillion total.'},
+  {id:'p0',name:'First Ascent',     icon:'🏔️',bonus:'+25% prod', bc:0,   gc:0.25,cond:s=>s.prestigeRuns>=1,     cdesc:'Ascend for the first time.'},
+  {id:'p1',name:'Veteran',          icon:'🎖️',bonus:'+50% prod', bc:0,   gc:0.50,cond:s=>s.prestigeRuns>=5,     cdesc:'Ascend 5 times.'},
+  {id:'p2',name:'Transcendent',     icon:'💫',bonus:'+100% prod',bc:0,   gc:1.00,cond:s=>s.prestigeRuns>=25,    cdesc:'Ascend 25 times.'},
+  {id:'b0',name:'GPU Hoarder',      icon:'🔲',bonus:'+5% prod',  bc:0,   gc:0.05,cond:s=>s.b[0]>=100,           cdesc:'Own 100 GPU Cores.'},
+  {id:'b1',name:'Cluster King',     icon:'🌐',bonus:'+10% prod', bc:0,   gc:0.10,cond:s=>s.b[5]>=50,            cdesc:'Own 50 GPU Clusters.'},
+  {id:'b2',name:'Reality Bender',   icon:'💫',bonus:'+20% prod', bc:0,   gc:0.20,cond:s=>s.b[14]>=1,            cdesc:'Own 1 Reality Engine.'},
+  {id:'b3',name:'Full Stack',       icon:'🏗️',bonus:'+50% prod', bc:0,   gc:0.50,cond:s=>s.b.slice(0,15).every(c=>c>=10), cdesc:'Own 10+ of every building (1-15).'},
+];
+
+const MILESTONES=[
+  {v:1000,    msg:'⚡ 1,000 tokens! The empire begins.'},
+  {v:100000,  msg:'🖥️ 100K tokens! Building momentum.'},
+  {v:1e7,     msg:'🏭 10 million tokens! Serious infrastructure.'},
+  {v:1e9,     msg:'🌐 1 billion tokens! You\'re a real operator.'},
+  {v:1e12,    msg:'⚛️ 1 trillion! Quantum territory reached.'},
+  {v:1e15,    msg:'🛸 1 quadrillion! Off the charts.'},
+  {v:1e18,    msg:'⭐ 1 quintillion! What are you?'},
+];
+
+const NEWS=[
+  'GPU prices stable after token rush ///', 'Scientists baffled by infinite token generation ///',
+  'Data center noise ordinance challenged ///', 'Quantum decoherence blamed for lost tokens ///',
+  'Mining rig fan shortage hits market ///', 'AI predicts token market will "go up" ///',
+  'Hyperscale DC approved for desert construction ///', 'Orbital array passes FCC inspection ///',
+  'H100 GPU spotted in wild, feared extinct ///', 'CUDA driver update breaks everything, as tradition ///',
+  'Dyson sphere construction delayed by union dispute ///', 'Galactic network latency: 4,000 years. Worth it ///',
+  'Temporal processor generates tokens before purchase confirmed ///', 'Reality Engine warranty void if opened ///',
+  'Consciousness upload subjects report "token-shaped dreams" ///', 'Entropy reverser violates second law; lawyers involved ///',
+  'Omega Singularity refuses to stop; no one knows how ///', 'Local man buys 500th GPU Core; neighbors concerned ///',
+];
+
+// STATE
+let S={
+  tok:0, tot:0, allTimeTot:0,
+  b:new Array(NB).fill(0),
+  pu:new Set(), ach:new Set(),
+  cm:1, bm:new Array(NB).fill(1), gm:1,
+  clicks:0, startTime:Date.now(),
+  msShown:new Set(), seenUpgrades:new Set(),
+  prestigeRuns:0,
+};
+let buyQty=1, activeTab='shop';
+const eventLog=[];
+
+// COMPUTE
+function achBonus(){
+  let bc=0,gc=0;
+  for(const a of ACHV) if(S.ach.has(a.id)){bc+=a.bc;gc+=a.gc;}
+  return {bc,gc};
+}
+function getAP(){ return Math.floor(S.allTimeTot/1e12); }
+function prestigeMult(){ return 1+getAP()*0.02; }
+function cps(){
+  const {gc}=achBonus();
+  let t=0;
+  for(let i=0;i<NB;i++) t+=S.b[i]*BLDGS[i].baseCps*S.bm[i];
+  return t*S.gm*prestigeMult()*(1+gc);
+}
+function clickPow(){
+  const {bc}=achBonus();
+  return Math.max(1,cps()*0.05)*S.cm*(1+bc);
+}
+function bldgCost1(i){ return Math.ceil(BLDGS[i].baseCost*Math.pow(SCALE,S.b[i])); }
+function bldgCostN(i,n){
+  if(n<=0) return Infinity;
+  const base=BLDGS[i].baseCost,cur=S.b[i];
+  return Math.ceil(base*Math.pow(SCALE,cur)*(Math.pow(SCALE,n)-1)/(SCALE-1));
+}
+function getMaxBuyable(i){
+  let n=0,rem=S.tok;
+  const base=BLDGS[i].baseCost,cur=S.b[i];
+  for(;;){const c=Math.ceil(base*Math.pow(SCALE,cur+n));if(rem>=c){rem-=c;n++;if(n>9999)break;}else break;}
+  return n;
+}
+function effectiveQty(i){ return buyQty==='max'?getMaxBuyable(i):buyQty; }
+
+// FORMAT
+function fmt(n){
+  if(n>=1e18) return (n/1e18).toFixed(2)+' Qi';
+  if(n>=1e15) return (n/1e15).toFixed(2)+' Q';
+  if(n>=1e12) return (n/1e12).toFixed(2)+' T';
+  if(n>=1e9)  return (n/1e9).toFixed(2)+' B';
+  if(n>=1e6)  return (n/1e6).toFixed(2)+' M';
+  if(n>=1e3)  return (n/1e3).toFixed(1)+' K';
+  return Math.floor(n).toLocaleString();
+}
+function fmtT(ms){const s=Math.floor(ms/1000),m=Math.floor(s/60),h=Math.floor(m/60);if(h>0)return h+'h '+(m%60)+'m';return m+'m '+(s%60)+'s';}
+function fmtRunTime(){return fmtT(Date.now()-S.startTime);}
+
+// STAGE LABEL
+function getStageLabel(){
+  const c=cps();
+  if(c<1)    return 'BOOT SEQUENCE';
+  if(c<50)   return 'SIDE PROJECT';
+  if(c<1000) return 'GARAGE RIG';
+  if(c<50000)return 'STARTUP CLUSTER';
+  if(c<1e7)  return 'ENTERPRISE INFRA';
+  if(c<1e10) return 'HYPERSCALE DC';
+  if(c<1e13) return 'GLOBAL AI NETWORK';
+  if(c<1e16) return 'MEGACORP AI';
+  return 'POST-HUMAN';
+}
+
+// MILESTONE BAR
+function updateMilestoneBar(){
+  let target=null;
+  for(let i=0;i<NB;i++){
+    if(S.b[i]===0){target={label:BLDGS[i].icon+' '+BLDGS[i].name,cost:bldgCost1(i)};break;}
+  }
+  if(!target) target={label:'⬆ Ascend',cost:1e12};
+  const pct=Math.min(100,(S.tok/target.cost)*100);
+  document.getElementById('ms-bar-target').textContent=target.label;
+  document.getElementById('ms-bar-pct').textContent=Math.floor(pct)+'%';
+  document.getElementById('ms-bar-fill').style.width=pct+'%';
+}
+
+// EVENT LOG
+function logEvent(msg,type=''){
+  const now=new Date();
+  const ts=now.getMinutes().toString().padStart(2,'0')+':'+now.getSeconds().toString().padStart(2,'0');
+  eventLog.unshift({msg,type,ts});
+  if(eventLog.length>40) eventLog.pop();
+  renderEventLog();
+}
+function renderEventLog(){
+  const el=document.getElementById('event-log-items');
+  el.innerHTML='';
+  const slice=eventLog.slice(0,15);
+  for(const e of slice){
+    const row=document.createElement('div');
+    row.className='ev-item'+(e.type?' ev-'+e.type:'');
+    row.innerHTML=`<span class="ev-time">${e.ts}</span><span class="ev-msg">${e.msg}</span>`;
+    el.appendChild(row);
+  }
+}
+
+// ACTIONS
+function clickGpu(e){
+  const p=clickPow();
+  S.tok+=p;S.tot+=p;S.allTimeTot+=p;S.clicks++;
+  spawnFt('+'+fmt(p),e.clientX,e.clientY);
+  // Ripple
+  const rect=document.getElementById('gpu').getBoundingClientRect();
+  const rip=document.createElement('div');
+  rip.className='ripple';
+  const size=40;
+  rip.style.cssText=`width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px;`;
+  document.getElementById('gpu').appendChild(rip);
+  setTimeout(()=>rip.remove(),600);
+  checkMs();checkAchievements();
+}
+function buyBldg(i){
+  const n=effectiveQty(i);if(n<=0)return;
+  const cost=bldgCostN(i,n);if(S.tok<cost)return;
+  S.tok-=cost;S.b[i]+=n;
+  const msg=BLDGS[i].icon+' '+BLDGS[i].name+(n>1?' ×'+n:' #'+S.b[i])+' purchased';
+  notify(msg);
+  logEvent(msg);
+  checkAchievements();renderInfra();renderShop();checkUpgBadge();
+}
+function buyUpgrade(id){
+  const u=UPGRADES.find(x=>x.id===id);
+  if(!u||S.pu.has(id)||S.tok<u.cost)return;
+  S.tok-=u.cost;S.pu.add(id);u.apply(S);
+  const msg='🔬 '+u.name+' unlocked';
+  notify(msg);
+  logEvent(msg,'upg');
+  renderShop();renderUpgrades();checkUpgBadge();
+}
+
+// PRESTIGE
+function tryAscend(){
+  const ap=getAP();
+  const pct=((ap*0.02)*100).toFixed(0);
+  if(!confirm(`ASCEND?\n\nAll buildings and upgrades reset.\n\nYour all-time earnings give you ${ap} Ascension Points.\nPermanent production bonus: +${pct}% (×${(1+ap*0.02).toFixed(2)})\n\nProceed?`))return;
+  S.tok=0;S.tot=0;
+  S.b=new Array(NB).fill(0);
+  S.pu=new Set();S.seenUpgrades=new Set();
+  S.cm=1;S.bm=new Array(NB).fill(1);S.gm=1;
+  S.prestigeRuns++;
+  checkAchievements();
+  renderAll();
+  const msg='🏔️ Ascended! '+ap+' AP · +'+pct+'% permanent bonus';
+  notify(msg,3500);
+  logEvent(msg,'ms');
+}
+function updateAscendBtn(){
+  const ap=getAP();
+  const btn=document.getElementById('ascend-btn');
+  const hasNew=ap>0;
+  btn.classList.toggle('glow',hasNew);
+  btn.textContent='⬆ ASCEND'+(ap>0?' ('+ap+' AP)':'');
+  document.getElementById('ap-label').textContent=ap+' AP · ×'+prestigeMult().toFixed(2);
+  document.getElementById('pres-label').textContent=fmt(S.allTimeTot)+' all-time';
+  const prog=(S.allTimeTot%1e12)/1e12*100;
+  document.getElementById('ap-bar-fill').style.width=Math.min(100,ap>0?(S.allTimeTot%1e12)/1e12*100:S.allTimeTot/1e12*100)+'%';
+}
+
+// ACHIEVEMENTS
+function checkAchievements(){
+  let newOne=false;
+  for(const a of ACHV){
+    if(!S.ach.has(a.id)&&a.cond(S)){
+      S.ach.add(a.id);newOne=true;
+      const msg='🏆 '+a.name+' ('+a.bonus+')';
+      notify(msg,3000);
+      logEvent(msg,'ach');
+    }
+  }
+  if(newOne){updateAchBadge();renderAchievements();}
+}
+function updateAchBadge(){
+  document.getElementById('ach-count').textContent=S.ach.size+'/'+ACHV.length;
+  document.getElementById('ach-progress-text').textContent=S.ach.size+' / '+ACHV.length;
+}
+
+// TABS
+function switchTab(tab){
+  activeTab=tab;
+  ['shop','upg','ach'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('act',t===tab);
+  });
+  document.getElementById('buy-bar').style.display=tab==='shop'?'flex':'none';
+  document.getElementById('shop-panel').style.display=tab==='shop'?'block':'none';
+  document.getElementById('upg-panel').classList.toggle('vis',tab==='upg');
+  document.getElementById('ach-panel').classList.toggle('vis',tab==='ach');
+  if(tab==='upg'){
+    UPGRADES.forEach(u=>{if(!S.pu.has(u.id)&&u.unlock(S))S.seenUpgrades.add(u.id);});
+    document.getElementById('upg-badge').hidden=true;
+  }
+}
+function setQty(btn,q){
+  buyQty=q;
+  document.querySelectorAll('.qbtn').forEach(b=>b.classList.remove('act'));
+  btn.classList.add('act');
+  renderShop();
+}
+function checkUpgBadge(){
+  if(activeTab==='upg')return;
+  const hasNew=UPGRADES.some(u=>!S.pu.has(u.id)&&u.unlock(S)&&!S.seenUpgrades.has(u.id));
+  document.getElementById('upg-badge').hidden=!hasNew;
+}
+
+// MILESTONES
+function checkMs(){
+  for(const m of MILESTONES){
+    if(!S.msShown.has(m.v)&&S.tot>=m.v){
+      S.msShown.add(m.v);
+      notify(m.msg,3000);
+      logEvent(m.msg,'ms');
+    }
+  }
+}
+
+// GOLDEN GPU
+let goldenActive=false;
+function scheduleGolden(){setTimeout(showGolden,100000+Math.random()*140000);}
+function showGolden(){
+  goldenActive=true;
+  document.getElementById('golden').classList.add('vis');
+  setTimeout(hideGolden,15000);
+}
+function hideGolden(){
+  goldenActive=false;
+  document.getElementById('golden').classList.remove('vis');
+  document.getElementById('effect-bar').classList.remove('vis');
+  scheduleGolden();
+}
+function clickGolden(e){
+  e.stopPropagation();if(!goldenActive)return;
+  const bonus=Math.max(cps()*30,clickPow()*30);
+  S.tok+=bonus;S.tot+=bonus;S.allTimeTot+=bonus;
+  spawnFt('✨ +'+fmt(bonus),e.clientX,e.clientY);
+  const msg='✨ Golden GPU! +'+fmt(bonus)+' tokens (30s production)';
+  notify(msg);
+  logEvent(msg,'gold');
+  const bar=document.getElementById('effect-bar');
+  bar.textContent='✨ GOLDEN GPU ACTIVE';
+  bar.classList.add('vis');
+  setTimeout(()=>bar.classList.remove('vis'),3000);
+  checkMs();hideGolden();
+}
+
+// RENDER
+function renderHUD(){
+  document.getElementById('tok-main').textContent=fmt(S.tok);
+  document.getElementById('tok-earned').textContent=fmt(S.tot)+' this run';
+  const c=cps();
+  document.getElementById('tok-cps').textContent=fmt(c);
+  document.getElementById('tok-cpc').textContent=fmt(clickPow());
+  document.getElementById('s-click').textContent=fmt(S.clicks);
+  document.getElementById('s-time').textContent=fmtRunTime();
+  document.getElementById('s-upg').textContent=S.pu.size;
+  const totalBlds=S.b.reduce((a,b)=>a+b,0);
+  document.getElementById('s-bld').textContent=totalBlds;
+  document.getElementById('s-runs').textContent=S.prestigeRuns;
+  document.getElementById('stage-label').textContent=getStageLabel();
+  // Production overview
+  document.getElementById('pov-cps').textContent=fmt(c);
+  document.getElementById('pov-blds').textContent=totalBlds;
+  const {gc}=achBonus();
+  const combinedMult=S.gm*prestigeMult()*(1+gc);
+  document.getElementById('pov-mult').textContent='×'+combinedMult.toFixed(2);
+  updateAscendBtn();
+  updateMilestoneBar();
+}
+function renderInfra(){
+  const g=document.getElementById('infra-grid');g.innerHTML='';
+  for(let i=0;i<NB;i++){
+    const b=BLDGS[i],cnt=S.b[i],color=BCOLORS[i],owned=cnt>0;
+    const {gc}=achBonus();
+    const tc=owned?b.baseCps*S.bm[i]*S.gm*prestigeMult()*(1+gc)*cnt:0;
+    const ec=b.baseCps*S.bm[i]*S.gm*prestigeMult()*(1+gc);
+    const card=document.createElement('div');
+    card.className='icard'+(owned?' owned':' locked');
+    card.style.setProperty('--icolor',color);
+    if(owned) card.style.boxShadow='0 0 10px '+color+'1a';
+    card.innerHTML=owned?`
+      <div class="ic-top"><div class="ic-icon">${b.icon}</div><div class="ic-count" style="color:${color}">${fmt(cnt)}</div></div>
+      <div class="ic-name">${b.name}</div>
+      <div class="ic-cps" style="color:${color}">${fmt(tc)}/s</div>
+      <div class="ic-each">${fmt(ec)}/s each</div>
+    `:`
+      <div class="ic-top"><div class="ic-icon">${b.icon}</div><div class="ic-count lc">—</div></div>
+      <div class="ic-name">${b.name}</div>
+      <div class="ic-next">${fmt(bldgCost1(i))} to unlock</div>
+      <div class="ic-each">${fmt(b.baseCps)}/s each</div>
+    `;
+    g.appendChild(card);
+  }
+}
+function renderShop(){
+  const panel=document.getElementById('shop-panel');panel.innerHTML='';
+  for(let i=0;i<NB;i++){
+    const b=BLDGS[i],color=BCOLORS[i];
+    const n=effectiveQty(i);
+    const cost=n>0?bldgCostN(i,n):bldgCost1(i);
+    const can=S.tok>=cost&&n>0;
+    const qLabel=buyQty==='max'?(n>0?'×'+n:'×0'):'×'+buyQty;
+    const {gc}=achBonus();
+    const ec=b.baseCps*S.bm[i]*S.gm*prestigeMult()*(1+gc);
+    const tc=ec*S.b[i];
+    const row=document.createElement('div');
+    row.className='brow'+(can?' can':(n===0?' broke':''));
+    row.innerHTML=`
+      <div class="bportrait" style="background:linear-gradient(135deg,${color}16,${color}05);">
+        <span style="filter:drop-shadow(0 0 5px ${color}77)">${b.icon}</span>
+      </div>
+      <div class="binfo2">
+        <div class="bname2" style="text-shadow:0 0 10px ${color}33">${b.name}</div>
+        <div class="bcost2-row">
+          <span class="bcost2 ${can?'ca':''}">${fmt(cost)}</span>
+          <span class="bqty-label">${qLabel}</span>
+        </div>
+        <div class="bcps2">${fmt(ec)}/s each${S.b[i]>0?' · '+fmt(tc)+'/s total':''}</div>
+      </div>
+      <div class="bcount-badge" style="color:${S.b[i]>0?color:'var(--dim)'}">${S.b[i]>0?S.b[i]:'—'}</div>
+    `;
+    row.addEventListener('click',()=>buyBldg(i));
+    row.addEventListener('mouseenter',ev=>showTip({name:b.icon+' '+b.name,eff:fmt(ec)+'/s each'+(S.b[i]>0?' · '+fmt(tc)+'/s total':''),cost:'Buy '+qLabel+': '+fmt(cost)+' tokens',desc:b.desc,flavor:b.flavor},ev));
+    row.addEventListener('mouseleave',hideTip);
+    panel.appendChild(row);
+  }
+}
+function renderUpgrades(){
+  const avail=UPGRADES.filter(u=>!S.pu.has(u.id)&&u.unlock(S));
+  const done=UPGRADES.filter(u=>S.pu.has(u.id));
+  const g=document.getElementById('upg-grid');
+  const dg=document.getElementById('upg-done-grid');
+  const dh=document.getElementById('upg-done-hdr');
+  g.innerHTML='';dg.innerHTML='';
+  for(const u of avail){
+    const can=S.tok>=u.cost;
+    const card=document.createElement('div');
+    card.className='upg-card'+(can?' rdy':'');
+    card.innerHTML=`<div class="upg-icon">${u.icon}</div><div class="upg-body"><div class="upg-name">${u.name}</div><div class="upg-eff">${u.eff}</div><div class="upg-cost ${can?'ca':'notca'}">${fmt(u.cost)} tokens</div></div>`;
+    card.addEventListener('click',()=>buyUpgrade(u.id));
+    card.addEventListener('mouseenter',ev=>showTip({name:u.name,eff:u.eff,cost:'Cost: '+fmt(u.cost),desc:u.desc},ev));
+    card.addEventListener('mouseleave',hideTip);
+    g.appendChild(card);
+  }
+  dh.style.display=done.length>0?'block':'none';
+  for(const u of done){
+    const card=document.createElement('div');
+    card.className='upg-card done';
+    card.innerHTML=`<div class="upg-icon">${u.icon}</div><div class="upg-body"><div class="upg-name">${u.name}</div><div class="upg-eff">${u.eff}</div><div class="upg-cost ca">✓ purchased</div></div>`;
+    card.addEventListener('mouseenter',ev=>showTip({name:u.name,eff:u.eff,cost:'✓ Purchased',desc:u.desc},ev));
+    card.addEventListener('mouseleave',hideTip);
+    dg.appendChild(card);
+  }
+}
+function renderAchievements(){
+  const g=document.getElementById('ach-grid');g.innerHTML='';
+  for(const a of ACHV){
+    const earned=S.ach.has(a.id);
+    const card=document.createElement('div');
+    card.className='acard'+(earned?' earned':' locked');
+    card.innerHTML=`
+      <div class="acard-icon">${a.icon}</div>
+      <div class="acard-info">
+        <div class="acard-name">${a.name}</div>
+        <div class="acard-bonus">${a.bonus}</div>
+        <div class="acard-cond">${earned?'✓ Earned':a.cdesc}</div>
+      </div>
+    `;
+    g.appendChild(card);
+  }
+}
+function renderAll(){renderInfra();renderShop();renderUpgrades();renderAchievements();checkUpgBadge();updateAchBadge();}
+
+// TOOLTIP
+function showTip(d,ev){
+  const t=document.getElementById('tip');
+  t.innerHTML=`<div class="t-name">${d.name}</div>${d.eff?'<div class="t-eff">'+d.eff+'</div>':''}<div class="t-cost">${d.cost}</div><div class="t-desc">${d.desc||''}</div>${d.flavor?'<div class="t-flavor">'+d.flavor+'</div>':''}`;
+  let x=ev.clientX+14,y=ev.clientY+14;
+  if(x+205>window.innerWidth)x=ev.clientX-210;
+  if(y+135>window.innerHeight)y=ev.clientY-140;
+  t.style.left=x+'px';t.style.top=y+'px';t.classList.add('vis');
+}
+function hideTip(){document.getElementById('tip').classList.remove('vis');}
+
+// NOTIFY
+let nT=null;
+function notify(msg,dur=2200){
+  const el=document.getElementById('notif');el.textContent=msg;el.classList.add('vis');
+  clearTimeout(nT);nT=setTimeout(()=>el.classList.remove('vis'),dur);
+}
+function spawnFt(text,x,y){
+  const el=document.createElement('div');el.className='ft';el.textContent=text;
+  el.style.left=(x+(Math.random()-.5)*28)+'px';el.style.top=(y-10)+'px';
+  document.body.appendChild(el);setTimeout(()=>el.remove(),950);
+}
+
+// CHIP / TICKER
+function initChip(){
+  const c=document.getElementById('chip-lines');
+  for(let i=0;i<7;i++){const h=document.createElement('div');h.className='cl';h.style.cssText=`width:100%;height:1px;top:${10+i*13}%;opacity:${.05+Math.random()*.12};`;c.appendChild(h);}
+  for(let i=0;i<7;i++){const v=document.createElement('div');v.className='cl';v.style.cssText=`height:100%;width:1px;left:${10+i*13}%;opacity:${.05+Math.random()*.12};`;c.appendChild(v);}
+}
+function initTicker(){document.getElementById('ticker').textContent=[...NEWS].sort(()=>Math.random()-.5).join('   ');}
+
+// SAVE / LOAD
+function save(){
+  localStorage.setItem('te4',JSON.stringify({
+    tok:S.tok,tot:S.tot,allTimeTot:S.allTimeTot,
+    b:S.b,pu:[...S.pu],ach:[...S.ach],
+    cm:S.cm,bm:S.bm,gm:S.gm,
+    clicks:S.clicks,startTime:S.startTime,
+    msShown:[...S.msShown],seenUpgrades:[...S.seenUpgrades],
+    prestigeRuns:S.prestigeRuns,
+  }));
+}
+function load(){
+  const raw=localStorage.getItem('te4');if(!raw)return;
+  try{
+    const d=JSON.parse(raw);
+    S.tok=d.tok||0;S.tot=d.tot||0;S.allTimeTot=d.allTimeTot||0;
+    S.b=d.b&&d.b.length===NB?d.b:new Array(NB).fill(0);
+    S.pu=new Set(d.pu||[]);S.ach=new Set(d.ach||[]);
+    S.cm=d.cm||1;S.bm=d.bm&&d.bm.length===NB?d.bm:new Array(NB).fill(1);S.gm=d.gm||1;
+    S.clicks=d.clicks||0;S.startTime=d.startTime||Date.now();
+    S.msShown=new Set(d.msShown||[]);S.seenUpgrades=new Set(d.seenUpgrades||[]);
+    S.prestigeRuns=d.prestigeRuns||0;
+  }catch(e){console.error(e);}
+}
+function confirmReset(){if(confirm('Wipe ALL progress including all-time tokens and achievements? This cannot be undone.')){localStorage.removeItem('te4');location.reload();}}
+
+// LOOP
+let lastT=Date.now();
+function tick(){
+  const now=Date.now(),dt=(now-lastT)/1000;lastT=now;
+  const earned=cps()*dt;
+  if(earned>0){S.tok+=earned;S.tot+=earned;S.allTimeTot+=earned;checkMs();}
+  renderHUD();
+}
+let frame=0;
+function slowTick(){
+  frame++;
+  if(frame%1===0)renderShop();
+  if(frame%2===0){renderInfra();renderUpgrades();checkUpgBadge();checkAchievements();}
+}
+
+load();initChip();initTicker();
+renderAll();
+logEvent('⚡ Token Empire initialized. Begin mining.','ms');
+document.getElementById('gpu').addEventListener('click',clickGpu);
+document.getElementById('golden').addEventListener('click',clickGolden);
+document.getElementById('buy-bar').style.display='flex';
+document.getElementById('shop-panel').style.display='block';
+setInterval(tick,50);
+setInterval(slowTick,600);
+setInterval(save,10000);
+scheduleGolden();
+</script>
+</body>
+</html>
