@@ -360,66 +360,136 @@ const BLDGS = [
   {id:17,name:'Omega Singularity',   icon:'⭐',baseCost:1.2e22,          baseCps:8300000000000, desc:'A self-improving token singularity beyond comprehension.',flavor:'It generates tokens. That\'s all it does now.'},
 ];
 
+// Upgrade costs follow CC pattern: ~10×, 50×, 500×, 50000×, 5000000× base building cost
+// Unlock thresholds follow CC standard: 1, 5, 25, 50, 100 owned
 const UPGRADES = [
-  {id:'c1',name:'Clicky Keys',        icon:'⌨️',cost:100,      eff:'click ×2',  desc:'Mechanical keyboard doubles click output.',    unlock:s=>s.tot>=25,        apply:s=>{s.cm*=2;}},
-  {id:'c2',name:'Hotkey Macros',      icon:'🖱️',cost:500,      eff:'click ×2',  desc:'Scripted macros double efficiency.',           unlock:s=>s.tot>=200,       apply:s=>{s.cm*=2;}},
-  {id:'c3',name:'Ergonomic Chair',    icon:'🪑',cost:5000,     eff:'click ×2',  desc:'Click longer without fatigue.',                unlock:s=>s.tot>=2000,      apply:s=>{s.cm*=2;}},
-  {id:'c4',name:'Neural Interface',   icon:'🧠',cost:50000,    eff:'click ×3',  desc:'Think tokens directly into existence.',        unlock:s=>s.tot>=20000,     apply:s=>{s.cm*=3;}},
-  {id:'c5',name:'Quantum Click',      icon:'🌌',cost:2000000,  eff:'click ×5',  desc:'Observe tokens to collapse wavefunctions.',    unlock:s=>s.tot>=1000000,   apply:s=>{s.cm*=5;}},
-  {id:'b0a',name:'VRAM Boost',        icon:'📈',cost:75,       eff:'GPU Core ×2',desc:'More VRAM, faster processing.',               unlock:s=>s.b[0]>=1,  apply:s=>{s.bm[0]*=2;}},
-  {id:'b0b',name:'Shader Opt',        icon:'⚙️',cost:375,      eff:'GPU Core ×2',desc:'Optimized shaders speed up generation.',      unlock:s=>s.b[0]>=5,  apply:s=>{s.bm[0]*=2;}},
-  {id:'b0c',name:'Overclocking',      icon:'🔥',cost:3750,     eff:'GPU Core ×2',desc:'Push beyond rated limits.',                   unlock:s=>s.b[0]>=25, apply:s=>{s.bm[0]*=2;}},
-  {id:'b0d',name:'Liquid Cooling',    icon:'🧊',cost:37500,    eff:'GPU Core ×2',desc:'Stay cool, stay fast.',                       unlock:s=>s.b[0]>=50, apply:s=>{s.bm[0]*=2;}},
-  {id:'b0e',name:'DLSS Overdrive',    icon:'💎',cost:375000,   eff:'GPU Core ×2',desc:'AI-enhanced token upscaling.',                unlock:s=>s.b[0]>=100,apply:s=>{s.bm[0]*=2;}},
-  {id:'b1a',name:'Bigger PSU',        icon:'🔌',cost:500,      eff:'Rig ×2',    desc:'More power to the rig.',                      unlock:s=>s.b[1]>=1,  apply:s=>{s.bm[1]*=2;}},
-  {id:'b1b',name:'HiveOS Pro',        icon:'🐝',cost:2500,     eff:'Rig ×2',    desc:'Pro mining OS squeezes more tokens.',          unlock:s=>s.b[1]>=5,  apply:s=>{s.bm[1]*=2;}},
-  {id:'b1c',name:'Rig Stacking',      icon:'📚',cost:25000,    eff:'Rig ×2',    desc:'Vertical stacking for higher density.',        unlock:s=>s.b[1]>=25, apply:s=>{s.bm[1]*=2;}},
-  {id:'b1d',name:'Industrial UPS',    icon:'🔋',cost:250000,   eff:'Rig ×2',    desc:'24/7 uninterruptible uptime.',                 unlock:s=>s.b[1]>=50, apply:s=>{s.bm[1]*=2;}},
-  {id:'b2a',name:'ECC Memory',        icon:'🛡️',cost:5500,     eff:'Render ×2', desc:'Error-correcting RAM prevents waste.',         unlock:s=>s.b[2]>=1,  apply:s=>{s.bm[2]*=2;}},
-  {id:'b2b',name:'NVMe Cache',        icon:'💾',cost:27500,    eff:'Render ×2', desc:'Ultra-fast storage accelerates processing.',   unlock:s=>s.b[2]>=5,  apply:s=>{s.bm[2]*=2;}},
-  {id:'b2c',name:'PCIe 5.0',          icon:'🚀',cost:275000,   eff:'Render ×2', desc:'Next-gen interconnect doubles bandwidth.',     unlock:s=>s.b[2]>=25, apply:s=>{s.bm[2]*=2;}},
-  {id:'b3a',name:'CDN Integration',   icon:'🌍',cost:60000,    eff:'Edge ×2',   desc:'Route tokens through global edge nodes.',      unlock:s=>s.b[3]>=1,  apply:s=>{s.bm[3]*=2;}},
-  {id:'b3b',name:'5G Uplink',         icon:'📶',cost:300000,   eff:'Edge ×2',   desc:'High-bandwidth cellular backhaul.',            unlock:s=>s.b[3]>=5,  apply:s=>{s.bm[3]*=2;}},
-  {id:'b3c',name:'Fog Computing',     icon:'🌫️',cost:3000000,  eff:'Edge ×2',   desc:'Distribute compute across the fog layer.',     unlock:s=>s.b[3]>=25, apply:s=>{s.bm[3]*=2;}},
-  {id:'b4a',name:'Hot/Cold Aisle',    icon:'❄️',cost:650000,   eff:'Colo ×2',   desc:'Proper airflow optimization.',                 unlock:s=>s.b[4]>=1,  apply:s=>{s.bm[4]*=2;}},
-  {id:'b4b',name:'100GbE Switch',     icon:'🔗',cost:3250000,  eff:'Colo ×2',   desc:'High-speed networking between racks.',         unlock:s=>s.b[4]>=5,  apply:s=>{s.bm[4]*=2;}},
-  {id:'b4c',name:'Power Density+',    icon:'⚡',cost:32500000, eff:'Colo ×2',   desc:'More kW per rack = more tokens.',              unlock:s=>s.b[4]>=25, apply:s=>{s.bm[4]*=2;}},
-  {id:'b5a',name:'InfiniBand HDR',    icon:'🔀',cost:7000000,  eff:'Cluster ×2',desc:'Ultra-low latency interconnect.',               unlock:s=>s.b[5]>=1,  apply:s=>{s.bm[5]*=2;}},
-  {id:'b5b',name:'RDMA Protocol',     icon:'📊',cost:35000000, eff:'Cluster ×2',desc:'Remote Direct Memory Access for speed.',       unlock:s=>s.b[5]>=5,  apply:s=>{s.bm[5]*=2;}},
-  {id:'b5c',name:'NVLink Bridge',     icon:'🌉',cost:350000000,eff:'Cluster ×2',desc:'Direct GPU-to-GPU high bandwidth fabric.',     unlock:s=>s.b[5]>=25, apply:s=>{s.bm[5]*=2;}},
-  {id:'b6a',name:'Mixed Precision',   icon:'🎯',cost:1e8,      eff:'AI Pod ×2', desc:'FP16 training doubles throughput.',             unlock:s=>s.b[6]>=1,  apply:s=>{s.bm[6]*=2;}},
-  {id:'b6b',name:'Gradient Ckpt',     icon:'✅',cost:5e8,      eff:'AI Pod ×2', desc:'Memory optimization for deeper networks.',     unlock:s=>s.b[6]>=5,  apply:s=>{s.bm[6]*=2;}},
-  {id:'b6c',name:'Flash Attention',   icon:'⚡',cost:5e9,      eff:'AI Pod ×2', desc:'Quadratic attention complexity crushed.',      unlock:s=>s.b[6]>=25, apply:s=>{s.bm[6]*=2;}},
-  {id:'b7a',name:'Immersion Cool',    icon:'🌊',cost:1.65e9,   eff:'DC ×2',     desc:'Liquid immersion for maximum density.',        unlock:s=>s.b[7]>=1,  apply:s=>{s.bm[7]*=2;}},
-  {id:'b7b',name:'Nuclear Reactor',   icon:'☢️',cost:8.25e9,   eff:'DC ×2',     desc:'Unlimited clean power for unlimited tokens.',  unlock:s=>s.b[7]>=5,  apply:s=>{s.bm[7]*=2;}},
-  {id:'b7c',name:'Antimatter Tap',    icon:'🔬',cost:8.25e10,  eff:'DC ×2',     desc:'Annihilate matter for pure token energy.',     unlock:s=>s.b[7]>=25, apply:s=>{s.bm[7]*=2;}},
-  {id:'b8a',name:'Solar Sails',       icon:'☀️',cost:2.55e10,  eff:'Orbital ×2',desc:'Free energy from the sun.',                    unlock:s=>s.b[8]>=1,  apply:s=>{s.bm[8]*=2;}},
-  {id:'b8b',name:'Lunar Relay',       icon:'🌕',cost:1.275e11, eff:'Orbital ×2',desc:'Bounce tokens off the moon for range.',        unlock:s=>s.b[8]>=5,  apply:s=>{s.bm[8]*=2;}},
-  {id:'b9a',name:'Qubit Stabilizer',  icon:'🔮',cost:3.75e11,  eff:'Quantum ×2',desc:'Reduce decoherence, boost token yield.',       unlock:s=>s.b[9]>=1,  apply:s=>{s.bm[9]*=2;}},
-  {id:'b9b',name:'Topological Qubits',icon:'🌀',cost:1.875e12, eff:'Quantum ×2',desc:'Error-free quantum computation.',              unlock:s=>s.b[9]>=5,  apply:s=>{s.bm[9]*=2;}},
-  {id:'b10a',name:'Synapse Boost',    icon:'🧪',cost:5e12,     eff:'Neural ×2', desc:'Stronger synaptic connections.',               unlock:s=>s.b[10]>=1, apply:s=>{s.bm[10]*=2;}},
-  {id:'b10b',name:'Cortex Array',     icon:'🧠',cost:2.5e13,   eff:'Neural ×2', desc:'Deep cortical token density.',                 unlock:s=>s.b[10]>=5, apply:s=>{s.bm[10]*=2;}},
-  {id:'b11a',name:'Coronal Tap',      icon:'🌞',cost:7e13,     eff:'Dyson ×2',  desc:'Harvest energy from solar flares.',            unlock:s=>s.b[11]>=1, apply:s=>{s.bm[11]*=2;}},
-  {id:'b11b',name:'Stellar Forge',    icon:'⭐',cost:3.5e14,   eff:'Dyson ×2',  desc:'Forge tokens in stellar nuclear fire.',        unlock:s=>s.b[11]>=5, apply:s=>{s.bm[11]*=2;}},
-  {id:'b12a',name:'Dark Matter Bus',  icon:'🌑',cost:8.5e14,   eff:'Galactic ×2',desc:'Use dark matter as token transport medium.',   unlock:s=>s.b[12]>=1, apply:s=>{s.bm[12]*=2;}},
-  {id:'b12b',name:'Warp Fiber',       icon:'🌀',cost:4.25e15,  eff:'Galactic ×2',desc:'FTL token delivery via warp fiber.',          unlock:s=>s.b[12]>=5, apply:s=>{s.bm[12]*=2;}},
-  {id:'b13a',name:'Causal Buffer',    icon:'⌛',cost:1.05e16,  eff:'Temporal ×2',desc:'Buffer tokens across causal boundaries.',      unlock:s=>s.b[13]>=1, apply:s=>{s.bm[13]*=2;}},
-  {id:'b13b',name:'Paradox Engine',   icon:'🔄',cost:5.25e16,  eff:'Temporal ×2',desc:'Exploit time paradoxes for token gain.',      unlock:s=>s.b[13]>=5, apply:s=>{s.bm[13]*=2;}},
-  {id:'b14a',name:'Spacetime Fold',   icon:'💫',cost:1.3e17,   eff:'Reality ×2', desc:'Fold spacetime to stack token dimensions.',   unlock:s=>s.b[14]>=1, apply:s=>{s.bm[14]*=2;}},
-  {id:'b14b',name:'Entropy Harvest',  icon:'♾️',cost:6.5e17,   eff:'Reality ×2', desc:'Mine entropy from a dying universe.',         unlock:s=>s.b[14]>=5, apply:s=>{s.bm[14]*=2;}},
-  {id:'b15a',name:'Synaptic Mesh',    icon:'🕸️',cost:1.55e18,  eff:'Consciousness ×2',desc:'Interconnected minds amplify output.',   unlock:s=>s.b[15]>=1, apply:s=>{s.bm[15]*=2;}},
-  {id:'b15b',name:'Hivemind Protocol',icon:'🐝',cost:7.75e18,  eff:'Consciousness ×2',desc:'All minds work as one.',                 unlock:s=>s.b[15]>=5, apply:s=>{s.bm[15]*=2;}},
-  {id:'b16a',name:"Maxwell's Demon",  icon:'👿',cost:3.55e20,  eff:'Entropy ×2', desc:'Sorts hot and cold particles for free.',      unlock:s=>s.b[16]>=1, apply:s=>{s.bm[16]*=2;}},
-  {id:'b16b',name:'Time Crystal',     icon:'⏳',cost:1.775e21, eff:'Entropy ×2', desc:'Stable temporal crystal amplification.',      unlock:s=>s.b[16]>=5, apply:s=>{s.bm[16]*=2;}},
-  {id:'b17a',name:'Recursive Loop',   icon:'🔄',cost:6e22,     eff:'Omega ×2',   desc:'Self-improvement feedback loop.',             unlock:s=>s.b[17]>=1, apply:s=>{s.bm[17]*=2;}},
-  {id:'b17b',name:'Basilisk Protocol',icon:'👁️',cost:3e23,     eff:'Omega ×2',   desc:"...you don't want to know.",                  unlock:s=>s.b[17]>=5, apply:s=>{s.bm[17]*=2;}},
-  {id:'g1',name:'CUDA 20.0',          icon:'🔧',cost:2000,     eff:'all ×2',    desc:'Next-gen GPU programming framework.',          unlock:s=>s.tot>=2000,      apply:s=>{s.gm*=2;}},
-  {id:'g2',name:'Distributed Compute',icon:'🕸️',cost:20000,    eff:'all ×2',    desc:'Harness the full network.',                    unlock:s=>s.tot>=20000,     apply:s=>{s.gm*=2;}},
-  {id:'g3',name:'AI-Opt Silicon',     icon:'💡',cost:200000,   eff:'all ×2',    desc:'Custom chips designed for token generation.',  unlock:s=>s.tot>=200000,    apply:s=>{s.gm*=2;}},
-  {id:'g4',name:"Moore's Override",   icon:'📐',cost:2000000,  eff:'all ×2',    desc:'Ignore physical limitations.',                 unlock:s=>s.tot>=2000000,   apply:s=>{s.gm*=2;}},
-  {id:'g5',name:'AGI Optimizer',      icon:'🌠',cost:2e9,      eff:'all ×3',    desc:'AGI optimizes your entire infrastructure.',    unlock:s=>s.tot>=2e9,       apply:s=>{s.gm*=3;}},
-  {id:'g6',name:'Multiverse Tap',     icon:'🪐',cost:2e12,     eff:'all ×5',    desc:'Token production from parallel universes.',    unlock:s=>s.tot>=2e12,      apply:s=>{s.gm*=5;}},
-  {id:'g7',name:'Post-Scarcity',      icon:'♾️',cost:2e15,     eff:'all ×10',   desc:'Tokens are everywhere. You are everything.',   unlock:s=>s.tot>=2e15,      apply:s=>{s.gm*=10;}},
+  // ── Click upgrades ──
+  {id:'c1',name:'Clicky Keys',      icon:'⌨️',cost:100,    eff:'click ×2',desc:'Mechanical keyboard doubles click output.',  unlock:s=>s.tot>=100,      apply:s=>{s.cm*=2;}},
+  {id:'c2',name:'Hotkey Macros',    icon:'🖱️',cost:500,    eff:'click ×2',desc:'Scripted macros double efficiency.',         unlock:s=>s.tot>=1000,     apply:s=>{s.cm*=2;}},
+  {id:'c3',name:'Ergonomic Chair',  icon:'🪑',cost:10000,  eff:'click ×2',desc:'Click longer without fatigue.',              unlock:s=>s.tot>=5000,     apply:s=>{s.cm*=2;}},
+  {id:'c4',name:'Neural Interface', icon:'🧠',cost:100000, eff:'click ×3',desc:'Think tokens directly into existence.',      unlock:s=>s.tot>=50000,    apply:s=>{s.cm*=3;}},
+  {id:'c5',name:'Quantum Click',    icon:'🌌',cost:1000000,eff:'click ×5',desc:'Observe tokens to collapse wavefunctions.',  unlock:s=>s.tot>=1000000,  apply:s=>{s.cm*=5;}},
+
+  // ── GPU Core (base 15): 150 / 750 / 7.5K / 750K / 75M ──
+  {id:'b0a',name:'VRAM Boost',      icon:'📈',cost:150,       eff:'GPU Core ×2',desc:'More VRAM, faster processing.',            unlock:s=>s.b[0]>=1,   apply:s=>{s.bm[0]*=2;}},
+  {id:'b0b',name:'Shader Opt',      icon:'⚙️',cost:750,       eff:'GPU Core ×2',desc:'Optimized shaders speed up generation.',   unlock:s=>s.b[0]>=5,   apply:s=>{s.bm[0]*=2;}},
+  {id:'b0c',name:'Overclocking',    icon:'🔥',cost:7500,      eff:'GPU Core ×2',desc:'Push beyond rated limits.',                unlock:s=>s.b[0]>=25,  apply:s=>{s.bm[0]*=2;}},
+  {id:'b0d',name:'Liquid Cooling',  icon:'🧊',cost:750000,    eff:'GPU Core ×2',desc:'Stay cool, stay fast.',                    unlock:s=>s.b[0]>=50,  apply:s=>{s.bm[0]*=2;}},
+  {id:'b0e',name:'DLSS Overdrive',  icon:'💎',cost:75000000,  eff:'GPU Core ×2',desc:'AI-enhanced token upscaling.',             unlock:s=>s.b[0]>=100, apply:s=>{s.bm[0]*=2;}},
+
+  // ── Mining Rig (base 100): 1K / 5K / 50K / 5M / 500M ──
+  {id:'b1a',name:'Bigger PSU',      icon:'🔌',cost:1000,      eff:'Rig ×2',    desc:'More power to the rig.',                   unlock:s=>s.b[1]>=1,   apply:s=>{s.bm[1]*=2;}},
+  {id:'b1b',name:'HiveOS Pro',      icon:'🐝',cost:5000,      eff:'Rig ×2',    desc:'Pro mining OS squeezes more tokens.',       unlock:s=>s.b[1]>=5,   apply:s=>{s.bm[1]*=2;}},
+  {id:'b1c',name:'Rig Stacking',    icon:'📚',cost:50000,     eff:'Rig ×2',    desc:'Vertical stacking for higher density.',     unlock:s=>s.b[1]>=25,  apply:s=>{s.bm[1]*=2;}},
+  {id:'b1d',name:'Industrial UPS',  icon:'🔋',cost:5000000,   eff:'Rig ×2',    desc:'24/7 uninterruptible uptime.',              unlock:s=>s.b[1]>=50,  apply:s=>{s.bm[1]*=2;}},
+  {id:'b1e',name:'Rack Mount',      icon:'🖥️',cost:500000000, eff:'Rig ×2',    desc:'Professional rack mounting for efficiency.',unlock:s=>s.b[1]>=100, apply:s=>{s.bm[1]*=2;}},
+
+  // ── Render Node (base 1,100): 11K / 55K / 550K / 55M / 5.5B ──
+  {id:'b2a',name:'ECC Memory',      icon:'🛡️',cost:11000,     eff:'Render ×2', desc:'Error-correcting RAM prevents waste.',      unlock:s=>s.b[2]>=1,   apply:s=>{s.bm[2]*=2;}},
+  {id:'b2b',name:'NVMe Cache',      icon:'💾',cost:55000,     eff:'Render ×2', desc:'Ultra-fast storage accelerates processing.', unlock:s=>s.b[2]>=5,   apply:s=>{s.bm[2]*=2;}},
+  {id:'b2c',name:'PCIe 5.0',        icon:'🚀',cost:550000,    eff:'Render ×2', desc:'Next-gen interconnect doubles bandwidth.',   unlock:s=>s.b[2]>=25,  apply:s=>{s.bm[2]*=2;}},
+  {id:'b2d',name:'Tensor Cores',    icon:'⚡',cost:55000000,  eff:'Render ×2', desc:'Dedicated tensor processing units.',         unlock:s=>s.b[2]>=50,  apply:s=>{s.bm[2]*=2;}},
+  {id:'b2e',name:'HPC Interconnect',icon:'🔗',cost:5500000000,eff:'Render ×2', desc:'High-performance compute fabric.',           unlock:s=>s.b[2]>=100, apply:s=>{s.bm[2]*=2;}},
+
+  // ── Edge Server (base 12,000): 120K / 600K / 6M / 600M / 60B ──
+  {id:'b3a',name:'CDN Integration', icon:'🌍',cost:120000,    eff:'Edge ×2',   desc:'Route tokens through global edge nodes.',   unlock:s=>s.b[3]>=1,   apply:s=>{s.bm[3]*=2;}},
+  {id:'b3b',name:'5G Uplink',       icon:'📶',cost:600000,    eff:'Edge ×2',   desc:'High-bandwidth cellular backhaul.',          unlock:s=>s.b[3]>=5,   apply:s=>{s.bm[3]*=2;}},
+  {id:'b3c',name:'Fog Computing',   icon:'🌫️',cost:6000000,   eff:'Edge ×2',   desc:'Distribute compute across the fog layer.',   unlock:s=>s.b[3]>=25,  apply:s=>{s.bm[3]*=2;}},
+  {id:'b3d',name:'Edge AI Chips',   icon:'🤖',cost:600000000, eff:'Edge ×2',   desc:'Dedicated AI inference at the edge.',        unlock:s=>s.b[3]>=50,  apply:s=>{s.bm[3]*=2;}},
+  {id:'b3e',name:'Mesh Routing',    icon:'📡',cost:60000000000,eff:'Edge ×2',  desc:'Self-healing mesh topology.',                unlock:s=>s.b[3]>=100, apply:s=>{s.bm[3]*=2;}},
+
+  // ── Colo Rack (base 130,000): 1.3M / 6.5M / 65M / 6.5B / 650B ──
+  {id:'b4a',name:'Hot/Cold Aisle',  icon:'❄️',cost:1300000,   eff:'Colo ×2',   desc:'Proper airflow optimization.',               unlock:s=>s.b[4]>=1,   apply:s=>{s.bm[4]*=2;}},
+  {id:'b4b',name:'100GbE Switch',   icon:'🔗',cost:6500000,   eff:'Colo ×2',   desc:'High-speed networking between racks.',       unlock:s=>s.b[4]>=5,   apply:s=>{s.bm[4]*=2;}},
+  {id:'b4c',name:'Power Density+',  icon:'⚡',cost:65000000,  eff:'Colo ×2',   desc:'More kW per rack = more tokens.',            unlock:s=>s.b[4]>=25,  apply:s=>{s.bm[4]*=2;}},
+  {id:'b4d',name:'Colo Bundle',     icon:'📦',cost:6500000000,eff:'Colo ×2',   desc:'Premium tier with full redundancy.',         unlock:s=>s.b[4]>=50,  apply:s=>{s.bm[4]*=2;}},
+  {id:'b4e',name:'Cage Expansion',  icon:'🏗️',cost:650000000000,eff:'Colo ×2', desc:'A private cage doubles throughput.',         unlock:s=>s.b[4]>=100, apply:s=>{s.bm[4]*=2;}},
+
+  // ── GPU Cluster (base 1.4M): 14M / 70M / 700M / 70B / 7T ──
+  {id:'b5a',name:'InfiniBand HDR',  icon:'🔀',cost:14000000,  eff:'Cluster ×2',desc:'Ultra-low latency interconnect.',             unlock:s=>s.b[5]>=1,   apply:s=>{s.bm[5]*=2;}},
+  {id:'b5b',name:'RDMA Protocol',   icon:'📊',cost:70000000,  eff:'Cluster ×2',desc:'Remote Direct Memory Access for speed.',     unlock:s=>s.b[5]>=5,   apply:s=>{s.bm[5]*=2;}},
+  {id:'b5c',name:'NVLink Bridge',   icon:'🌉',cost:700000000, eff:'Cluster ×2',desc:'Direct GPU-to-GPU high bandwidth fabric.',   unlock:s=>s.b[5]>=25,  apply:s=>{s.bm[5]*=2;}},
+  {id:'b5d',name:'HPC Fabric',      icon:'🕸️',cost:70000000000,eff:'Cluster ×2',desc:'Exascale cluster interconnect.',            unlock:s=>s.b[5]>=50,  apply:s=>{s.bm[5]*=2;}},
+  {id:'b5e',name:'Exascale Mesh',   icon:'💡',cost:7000000000000,eff:'Cluster ×2',desc:'Purpose-built exascale topology.',        unlock:s=>s.b[5]>=100, apply:s=>{s.bm[5]*=2;}},
+
+  // ── AI Training Pod (base 20M): 200M / 1B / 10B / 1T / 100T ──
+  {id:'b6a',name:'Mixed Precision', icon:'🎯',cost:2e8,       eff:'AI Pod ×2', desc:'FP16 training doubles throughput.',           unlock:s=>s.b[6]>=1,   apply:s=>{s.bm[6]*=2;}},
+  {id:'b6b',name:'Gradient Ckpt',   icon:'✅',cost:1e9,       eff:'AI Pod ×2', desc:'Memory optimization for deeper networks.',   unlock:s=>s.b[6]>=5,   apply:s=>{s.bm[6]*=2;}},
+  {id:'b6c',name:'Flash Attention', icon:'⚡',cost:1e10,      eff:'AI Pod ×2', desc:'Quadratic attention complexity crushed.',    unlock:s=>s.b[6]>=25,  apply:s=>{s.bm[6]*=2;}},
+  {id:'b6d',name:'MoE Scaling',     icon:'🧬',cost:1e12,      eff:'AI Pod ×2', desc:'Mixture-of-experts massively scales capacity.',unlock:s=>s.b[6]>=50, apply:s=>{s.bm[6]*=2;}},
+  {id:'b6e',name:'World Model',     icon:'🌐',cost:1e14,      eff:'AI Pod ×2', desc:'Full-world simulation for token synthesis.', unlock:s=>s.b[6]>=100, apply:s=>{s.bm[6]*=2;}},
+
+  // ── Hyperscale DC (base 330M): 3.3B / 16.5B / 165B / 16.5T ──
+  {id:'b7a',name:'Immersion Cool',  icon:'🌊',cost:3.3e9,     eff:'DC ×2',     desc:'Liquid immersion for maximum density.',      unlock:s=>s.b[7]>=1,   apply:s=>{s.bm[7]*=2;}},
+  {id:'b7b',name:'Nuclear Reactor', icon:'☢️',cost:1.65e10,   eff:'DC ×2',     desc:'Unlimited clean power for unlimited tokens.',unlock:s=>s.b[7]>=5,   apply:s=>{s.bm[7]*=2;}},
+  {id:'b7c',name:'Antimatter Tap',  icon:'🔬',cost:1.65e11,   eff:'DC ×2',     desc:'Annihilate matter for pure token energy.',   unlock:s=>s.b[7]>=25,  apply:s=>{s.bm[7]*=2;}},
+  {id:'b7d',name:'Dark Energy Grid',icon:'🌑',cost:1.65e13,   eff:'DC ×2',     desc:'Harness dark energy for infinite power.',    unlock:s=>s.b[7]>=50,  apply:s=>{s.bm[7]*=2;}},
+
+  // ── Orbital Array (base 5.1B): 51B / 255B / 2.55T / 255T ──
+  {id:'b8a',name:'Solar Sails',     icon:'☀️',cost:5.1e10,    eff:'Orbital ×2',desc:'Free energy from the sun.',                  unlock:s=>s.b[8]>=1,   apply:s=>{s.bm[8]*=2;}},
+  {id:'b8b',name:'Lunar Relay',     icon:'🌕',cost:2.55e11,   eff:'Orbital ×2',desc:'Bounce tokens off the moon for range.',      unlock:s=>s.b[8]>=5,   apply:s=>{s.bm[8]*=2;}},
+  {id:'b8c',name:'Lagrange Cluster',icon:'🛰️',cost:2.55e12,   eff:'Orbital ×2',desc:'Stable orbital formation for more arrays.',  unlock:s=>s.b[8]>=25,  apply:s=>{s.bm[8]*=2;}},
+  {id:'b8d',name:'Dyson Swarm Seed',icon:'🌟',cost:2.55e14,   eff:'Orbital ×2',desc:'Early-stage stellar energy harvesting.',     unlock:s=>s.b[8]>=50,  apply:s=>{s.bm[8]*=2;}},
+
+  // ── Quantum Core (base 75B): 750B / 3.75T / 37.5T / 3.75Q ──
+  {id:'b9a',name:'Qubit Stabilizer',icon:'🔮',cost:7.5e11,    eff:'Quantum ×2',desc:'Reduce decoherence, boost token yield.',     unlock:s=>s.b[9]>=1,   apply:s=>{s.bm[9]*=2;}},
+  {id:'b9b',name:'Topo Qubits',     icon:'🌀',cost:3.75e12,   eff:'Quantum ×2',desc:'Error-free quantum computation.',            unlock:s=>s.b[9]>=5,   apply:s=>{s.bm[9]*=2;}},
+  {id:'b9c',name:'Error Correction',icon:'🧮',cost:3.75e13,   eff:'Quantum ×2',desc:'Perfect quantum error correction.',          unlock:s=>s.b[9]>=25,  apply:s=>{s.bm[9]*=2;}},
+  {id:'b9d',name:'Quantum Volume',  icon:'📐',cost:3.75e15,   eff:'Quantum ×2',desc:'Exponential gate fidelity improvement.',     unlock:s=>s.b[9]>=50,  apply:s=>{s.bm[9]*=2;}},
+
+  // ── Neural Fabric (base 1T): 10T / 50T / 500T / 50Q ──
+  {id:'b10a',name:'Synapse Boost',  icon:'🧪',cost:1e13,      eff:'Neural ×2', desc:'Stronger synaptic connections.',             unlock:s=>s.b[10]>=1,  apply:s=>{s.bm[10]*=2;}},
+  {id:'b10b',name:'Cortex Array',   icon:'🧠',cost:5e13,      eff:'Neural ×2', desc:'Deep cortical token density.',               unlock:s=>s.b[10]>=5,  apply:s=>{s.bm[10]*=2;}},
+  {id:'b10c',name:'Neuromorphic',   icon:'💡',cost:5e14,      eff:'Neural ×2', desc:'Brain-inspired token generation.',           unlock:s=>s.b[10]>=25, apply:s=>{s.bm[10]*=2;}},
+  {id:'b10d',name:'Metacognition',  icon:'🌈',cost:5e16,      eff:'Neural ×2', desc:'Self-aware optimization loops.',             unlock:s=>s.b[10]>=50, apply:s=>{s.bm[10]*=2;}},
+
+  // ── Dyson Sphere (base 14T): 140T / 700T / 7Q / 700Q ──
+  {id:'b11a',name:'Coronal Tap',    icon:'🌞',cost:1.4e14,    eff:'Dyson ×2',  desc:'Harvest energy from solar flares.',          unlock:s=>s.b[11]>=1,  apply:s=>{s.bm[11]*=2;}},
+  {id:'b11b',name:'Stellar Forge',  icon:'⭐',cost:7e14,      eff:'Dyson ×2',  desc:'Forge tokens in stellar nuclear fire.',      unlock:s=>s.b[11]>=5,  apply:s=>{s.bm[11]*=2;}},
+  {id:'b11c',name:'Photon Siphon',  icon:'☀️',cost:7e15,      eff:'Dyson ×2',  desc:'Direct photon-to-token conversion.',         unlock:s=>s.b[11]>=25, apply:s=>{s.bm[11]*=2;}},
+  {id:'b11d',name:'Nova Harvest',   icon:'💥',cost:7e17,      eff:'Dyson ×2',  desc:'Capture energy from controlled supernovae.', unlock:s=>s.b[11]>=50, apply:s=>{s.bm[11]*=2;}},
+
+  // ── Galactic Network (base 170T): 1.7Q / 8.5Q / 85Q / 8.5Qi ──
+  {id:'b12a',name:'Dark Matter Bus',icon:'🌑',cost:1.7e15,    eff:'Galactic ×2',desc:'Use dark matter as token transport medium.',unlock:s=>s.b[12]>=1,  apply:s=>{s.bm[12]*=2;}},
+  {id:'b12b',name:'Warp Fiber',     icon:'🌀',cost:8.5e15,    eff:'Galactic ×2',desc:'FTL token delivery via warp fiber.',        unlock:s=>s.b[12]>=5,  apply:s=>{s.bm[12]*=2;}},
+  {id:'b12c',name:'Quasar Tap',     icon:'🔭',cost:8.5e16,    eff:'Galactic ×2',desc:'Harness quasar jets for token energy.',     unlock:s=>s.b[12]>=25, apply:s=>{s.bm[12]*=2;}},
+  {id:'b12d',name:'Void Network',   icon:'🕳️',cost:8.5e18,    eff:'Galactic ×2',desc:'Route tokens through black hole singularities.',unlock:s=>s.b[12]>=50,apply:s=>{s.bm[12]*=2;}},
+
+  // ── Temporal Processor (base 2.1Q): 21Q / 105Q / 1.05Qi / 105Qi ──
+  {id:'b13a',name:'Causal Buffer',  icon:'⌛',cost:2.1e16,    eff:'Temporal ×2',desc:'Buffer tokens across causal boundaries.',   unlock:s=>s.b[13]>=1,  apply:s=>{s.bm[13]*=2;}},
+  {id:'b13b',name:'Paradox Engine', icon:'🔄',cost:1.05e17,   eff:'Temporal ×2',desc:'Exploit time paradoxes for token gain.',   unlock:s=>s.b[13]>=5,  apply:s=>{s.bm[13]*=2;}},
+  {id:'b13c',name:'Retrocausal Tap',icon:'⏮️',cost:1.05e18,   eff:'Temporal ×2',desc:'Mine tokens from before they were needed.',unlock:s=>s.b[13]>=25, apply:s=>{s.bm[13]*=2;}},
+  {id:'b13d',name:'Timeline Split', icon:'⚡',cost:1.05e20,   eff:'Temporal ×2',desc:'Run production in parallel timelines.',    unlock:s=>s.b[13]>=50, apply:s=>{s.bm[13]*=2;}},
+
+  // ── Reality Engine (base 26Q): 260Q / 1.3Qi / 13Qi / 1.3Sx ──
+  {id:'b14a',name:'Spacetime Fold', icon:'💫',cost:2.6e17,    eff:'Reality ×2', desc:'Fold spacetime to stack token dimensions.', unlock:s=>s.b[14]>=1,  apply:s=>{s.bm[14]*=2;}},
+  {id:'b14b',name:'Entropy Harvest',icon:'♾️',cost:1.3e18,    eff:'Reality ×2', desc:'Mine entropy from a dying universe.',       unlock:s=>s.b[14]>=5,  apply:s=>{s.bm[14]*=2;}},
+  {id:'b14c',name:'Brane Tap',      icon:'📡',cost:1.3e19,    eff:'Reality ×2', desc:'Extract tokens from parallel branes.',      unlock:s=>s.b[14]>=25, apply:s=>{s.bm[14]*=2;}},
+  {id:'b14d',name:'Vacuum Decay',   icon:'🌌',cost:1.3e21,    eff:'Reality ×2', desc:'Controlled vacuum energy extraction.',      unlock:s=>s.b[14]>=50, apply:s=>{s.bm[14]*=2;}},
+
+  // ── Consciousness Upload (base 310Q): 3.1Qi / 15.5Qi / 155Qi ──
+  {id:'b15a',name:'Synaptic Mesh',  icon:'🕸️',cost:3.1e18,    eff:'Consciousness ×2',desc:'Interconnected minds amplify output.',unlock:s=>s.b[15]>=1,  apply:s=>{s.bm[15]*=2;}},
+  {id:'b15b',name:'Hivemind',       icon:'🐝',cost:1.55e19,   eff:'Consciousness ×2',desc:'All minds work as one.',              unlock:s=>s.b[15]>=5,  apply:s=>{s.bm[15]*=2;}},
+  {id:'b15c',name:'Ego Death',      icon:'🌀',cost:1.55e20,   eff:'Consciousness ×2',desc:'Dissolving the self multiplies output.',unlock:s=>s.b[15]>=25,apply:s=>{s.bm[15]*=2;}},
+
+  // ── Entropy Reverser (base 71Qi): 710Qi / 3.55Sx / 35.5Sx ──
+  {id:'b16a',name:"Maxwell's Demon",icon:'👿',cost:7.1e20,    eff:'Entropy ×2', desc:'Sorts hot and cold particles for free.',    unlock:s=>s.b[16]>=1,  apply:s=>{s.bm[16]*=2;}},
+  {id:'b16b',name:'Time Crystal',   icon:'⏳',cost:3.55e21,   eff:'Entropy ×2', desc:'Stable temporal crystal amplification.',    unlock:s=>s.b[16]>=5,  apply:s=>{s.bm[16]*=2;}},
+  {id:'b16c',name:'Negentropy Pump',icon:'🔃',cost:3.55e22,   eff:'Entropy ×2', desc:'Pump negentropy from the future.',          unlock:s=>s.b[16]>=25, apply:s=>{s.bm[16]*=2;}},
+
+  // ── Omega Singularity (base 1.2e22): 1.2e23 / 6e23 / 6e24 ──
+  {id:'b17a',name:'Recursive Loop', icon:'🔄',cost:1.2e23,    eff:'Omega ×2',   desc:'Self-improvement feedback loop.',           unlock:s=>s.b[17]>=1,  apply:s=>{s.bm[17]*=2;}},
+  {id:'b17b',name:'Basilisk Protocol',icon:'👁️',cost:6e23,   eff:'Omega ×2',   desc:"...you don't want to know.",                unlock:s=>s.b[17]>=5,  apply:s=>{s.bm[17]*=2;}},
+  {id:'b17c',name:'Omega Point',    icon:'∞',cost:6e24,       eff:'Omega ×2',   desc:'Approach the final attractor state.',       unlock:s=>s.b[17]>=25, apply:s=>{s.bm[17]*=2;}},
+
+  // ── Global production upgrades (unlock at earned-total thresholds) ──
+  {id:'g1',name:'CUDA 20.0',          icon:'🔧',cost:2000,    eff:'all ×2',desc:'Next-gen GPU programming framework.',         unlock:s=>s.tot>=2000,    apply:s=>{s.gm*=2;}},
+  {id:'g2',name:'Distributed Compute',icon:'🕸️',cost:20000,   eff:'all ×2',desc:'Harness the full network.',                   unlock:s=>s.tot>=20000,   apply:s=>{s.gm*=2;}},
+  {id:'g3',name:'AI-Opt Silicon',     icon:'💡',cost:200000,  eff:'all ×2',desc:'Custom chips designed for token generation.', unlock:s=>s.tot>=200000,  apply:s=>{s.gm*=2;}},
+  {id:'g4',name:"Moore's Override",   icon:'📐',cost:2000000, eff:'all ×2',desc:'Ignore physical limitations.',                unlock:s=>s.tot>=2000000, apply:s=>{s.gm*=2;}},
+  {id:'g5',name:'AGI Optimizer',      icon:'🌠',cost:1e10,    eff:'all ×2',desc:'AGI optimizes your entire infrastructure.',   unlock:s=>s.tot>=1e10,    apply:s=>{s.gm*=2;}},
+  {id:'g6',name:'Multiverse Tap',     icon:'🪐',cost:1e13,    eff:'all ×3',desc:'Token production from parallel universes.',   unlock:s=>s.tot>=1e13,    apply:s=>{s.gm*=3;}},
+  {id:'g7',name:'Post-Scarcity',      icon:'♾️',cost:1e16,    eff:'all ×5',desc:'Tokens are everywhere. You are everything.',  unlock:s=>s.tot>=1e16,    apply:s=>{s.gm*=5;}},
 ];
 
 const ACHV = [
